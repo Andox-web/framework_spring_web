@@ -5,7 +5,7 @@ SET APP_NAME=Framework
 SET APP_DIR=%~dp0
 SET SRC_DIR=%APP_DIR%mg
 SET LIB_DIR=%APP_DIR%lib
-SET JAR_FILE=..\%APP_NAME%.jar
+SET JAR_FILE=D:\dev\helloworld\lib\%APP_NAME%.jar
 
 REM Create a temporary directory and copy compiled classes, web, lib, and web.xml into it
 
