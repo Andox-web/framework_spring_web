@@ -40,7 +40,8 @@ public class FrontController extends HttpServlet {
                 String path = request.getServletPath().trim();
                 Mapping map = controllerList.get(path);
                 if (map!=null) {
-                    out.println(map.getMethod().getName()+"--"+map.getControlleClass().getSimpleName());    
+                    out.println(map.getMethod().getName()+"--"+map.getControlleClass().getSimpleName());
+                    out.println(map.execute().toString());    
                 }
                 else{
                     out.println("tss rah ato eh");    
