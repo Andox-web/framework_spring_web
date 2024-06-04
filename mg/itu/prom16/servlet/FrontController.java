@@ -42,6 +42,7 @@ public class FrontController extends HttpServlet {
                 Object object = map.execute();
                 if (object instanceof String string) {
                     htmlContent.add(string);
+                    writeTableToResponse(response, htmlContent); 
                 }
                 else if (object instanceof ModelAndView modelAndView) {
                     writeModelAndViewToResponse(response, request, modelAndView);
