@@ -8,6 +8,7 @@ Fonctionnalités principales
     Renvoi de chaînes de caractères : Permet aux méthodes de contrôleur de renvoyer du contenu HTML brut.
     Prise en charge de ModelAndView : Offre la possibilité de renvoyer des objets ModelAndView contenant des données de modèle et des vues JSP à utiliser pour le rendu.
     Analyse de package : Identifie automatiquement les classes de contrôleur annotées dans un package spécifié.
+
 Démarrage rapide
     Ajoutez le framework à votre projet : mettez le Framework.jar dans le lib de votre projet
 
