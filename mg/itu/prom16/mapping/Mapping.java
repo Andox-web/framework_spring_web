@@ -23,6 +23,7 @@ public class Mapping {
         this.method = method;
     }
     public Object execute(Object... arg) throws IllegalAccessException, InvocationTargetException, InstantiationException{
+        
         return method.invoke(controlleClass.newInstance(), arg);
     }    
 }
