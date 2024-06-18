@@ -33,8 +33,8 @@ public class Mapping {
         this.method = method;
     }
     private Object execute(Object... arg) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
-            Constructor<?> constructor = controlleClass.getDeclaredConstructor();
-            Object instance = constructor.newInstance();
+        Constructor<?> constructor = controlleClass.getDeclaredConstructor();
+        Object instance = constructor.newInstance();
         return method.invoke(instance, arg);
     }
     public Object execute(HttpServletRequest request, HttpServletResponse response) throws MappingNotAllowedException, IllegalArgumentException, ArgumentException, ReflectiveOperationException {

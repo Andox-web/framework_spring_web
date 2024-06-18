@@ -55,8 +55,7 @@ public class FrontController extends HttpServlet {
         } catch (MappingNotAllowedException e) {
             response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         } catch (ArgumentException e) {
-            
-            throw new ServletException(e);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         } catch (ReflectiveOperationException e) {
             throw new ServletException(e);
         }
