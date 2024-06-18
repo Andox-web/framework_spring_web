@@ -3,7 +3,6 @@ package mg.itu.prom16.servlet;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +14,10 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.util.PackageScanner;
-import mg.itu.prom16.annotation.Controller;
+import mg.itu.prom16.annotation.controller.Controller;
 import mg.itu.prom16.exception.build.BuildException;
+import mg.itu.prom16.exception.request.ArgumentException;
+import mg.itu.prom16.exception.request.MappingNotAllowedException;
 import mg.itu.prom16.exception.request.TypeNotRecognizedException;
 import mg.itu.prom16.mapping.Mapping;
 
@@ -35,22 +36,33 @@ public class FrontController extends HttpServlet {
     }
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-            String path = request.getServletPath().trim();
-            Mapping map = controllerList.get(path);
-            response.setContentType("text/html");
-            try {
-                if (map!=null) {
-                    handleResponse(request, response, map);
-                }
-                else{
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                }
-            } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
-                throw new ServletException(e);
-            } catch (TypeNotRecognizedException e) {
-                throw new ServletException(e);
+        String path = request.getServletPath().trim();
+        Mapping map = controllerList.get(path);
+        response.setContentType("text/html");
+        try {
+            if (map!=null) {
+                handleResponse(request, response, map);
             }
+            else{
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            }
+        }catch (TypeNotRecognizedException e) {
+            throw new ServletException(e);
+        } catch (NoSuchMethodException e) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        } catch (IllegalArgumentException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+        } catch (MappingNotAllowedException e) {
+            response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+        } catch (ArgumentException e) {
             
+            throw new ServletException(e);
+        } catch (ReflectiveOperationException e) {
+            throw new ServletException(e);
+        }
+        catch(SecurityException e){
+            throw new ServletException(e);
+        }
     }
 
     @Override
@@ -83,8 +95,8 @@ public class FrontController extends HttpServlet {
         dispatcher.forward(request, response);
     }
 
-    public void handleResponse(HttpServletRequest request, HttpServletResponse response, Mapping map) throws IOException, TypeNotRecognizedException, ServletException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        Object object = map.execute();
+    public void handleResponse(HttpServletRequest request, HttpServletResponse response, Mapping map) throws IOException, TypeNotRecognizedException, ServletException, IllegalArgumentException, MappingNotAllowedException, ArgumentException, ReflectiveOperationException {
+        Object object = map.execute(request, response);
         if (object instanceof String string) {
             List<String> htmlContent = new ArrayList<>();
             htmlContent.add(string);

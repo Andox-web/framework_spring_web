@@ -10,7 +10,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 import mg.itu.prom16.mapping.Mapping;
-import mg.itu.prom16.annotation.Get;
+import mg.itu.prom16.mapping.MappingHandler;
+import mg.itu.prom16.annotation.mapping.GetMapping;
 import mg.itu.prom16.exception.build.BuildException;
 import mg.itu.prom16.exception.build.DuplicateUrlException;
 
@@ -66,10 +67,8 @@ public class PackageScanner {
     private static void getMethods(Class<?> clazz, Map<String, Mapping> methods) throws BuildException {
         try {
             for (Method method : clazz.getDeclaredMethods()) {
-                Get an = method.getAnnotation(Get.class);
-
-                if (an != null) {
-                    String url = an.url();
+                String url =MappingHandler.getUrl(method);
+                if (url != null) {
                     if (url.isBlank()) {
                         url=method.getName();
                     }

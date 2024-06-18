@@ -20,7 +20,7 @@ for /R "%SRC_DIR%" %%G IN ("*.java") DO (
 )
 
 REM Compile Java classes
-javac -cp %LIB_DIR%\* -d "..\temp%APP_NAME%\tempclass" "..\temp%APP_NAME%\tempJava\*.java"
+javac -parameters -cp %LIB_DIR%\* -d "..\temp%APP_NAME%\tempclass"  "..\temp%APP_NAME%\tempJava\*.java" 
 
 cd ..\temp%APP_NAME%\tempclass
 REM Create a .war file from the temporary directory
