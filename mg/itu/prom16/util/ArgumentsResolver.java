@@ -10,13 +10,14 @@ import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import mg.itu.prom16.annotation.param.RequestBody;
 import mg.itu.prom16.annotation.param.RequestParam;
 import mg.itu.prom16.exception.request.ArgumentException;
 import mg.itu.prom16.mapping.Mapping;
 
 public class ArgumentsResolver {
 
-    private static final Object[] PARAMETER_ANNOTATIONS = {RequestParam.class};
+    private static final Object[] PARAMETER_ANNOTATIONS = {RequestParam.class,RequestBody.class};
 
     public static Object[] resolveArguments(HttpServletRequest request, HttpServletResponse response, Mapping mapping) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException {
         List<Object> args = new ArrayList<>();
@@ -61,6 +62,25 @@ public class ArgumentsResolver {
             }
             String paramValue = request.getParameter(paramName);
             return TypeResolver.castValue(paramValue,parameter.getType());
+        }else if (annotation instanceof RequestBody) {
+            try {
+                
+                Constructor<?> constructor = parameter.getType().getDeclaredConstructor();
+                Object obj = constructor.newInstance();
+                
+                for (Field field : obj.getClass().getDeclaredFields()) {
+                    String fieldName = field.getName();
+                    String paramValue = request.getParameter(fieldName);
+                    if (paramValue != null) {
+                        field.setAccessible(true);
+                        field.set(obj, TypeResolver.castValue(paramValue, field.getType()));
+                    }
+                }
+
+                return obj;
+            } catch (InstantiationException | IllegalAccessException e) {
+               throw new ArgumentException(e);
+            }
         }
 
         throw new ArgumentException("argument non gerer (non annote)");
