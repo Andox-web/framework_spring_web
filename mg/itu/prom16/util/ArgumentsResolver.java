@@ -28,14 +28,12 @@ public class ArgumentsResolver {
         for (Parameter parameter : parameters) {
             // Vérifier si le paramètre est annoté avec une des annotations de PARAMETER_ANNOTATIONS
             Annotation annotation = findParameterAnnotation(parameter);
-            if (annotation != null) {
-
-                Object arg = resolveCustomArgument(parameter, annotation, request, response);
-                if (arg == null) {
-                    throw new ArgumentException("Paramètre non géré : " + parameter.getName());
-                }
-                args.add(arg);
+            Object arg = resolveCustomArgument(parameter, annotation, request, response);
+            if (arg == null) {
+                throw new ArgumentException("Paramètre non géré : " + parameter.getName());
             }
+            args.add(arg);
+            
         }
         
 
@@ -83,7 +81,7 @@ public class ArgumentsResolver {
             }
         }
 
-        throw new ArgumentException("argument non gerer (non annote)");
+        throw new ArgumentException("ETU002624 argument non gerer (non annote)");
     }
 }
 

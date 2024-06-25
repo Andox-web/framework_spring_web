@@ -3,6 +3,7 @@ package mg.itu.prom16.servlet;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
+import java.rmi.ServerException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,13 +55,16 @@ public class FrontController extends HttpServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         } catch (MappingNotAllowedException e) {
             response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
-        } catch (ArgumentException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-        } catch (ReflectiveOperationException e) {
-            throw new ServletException(e);
-        }
-        catch(SecurityException e){
-            throw new ServletException(e);
+        } catch (ArgumentException|ReflectiveOperationException|SecurityException e) {
+            request.setAttribute("error", e);
+
+            StringBuilder stringBuilder = new StringBuilder(getInitParameter("viewFolder"));
+            stringBuilder.append(getInitParameter("errorPage")!=null?getInitParameter("errorPage"):"error");
+            stringBuilder.append(getInitParameter("suffixe"));
+
+            RequestDispatcher dispatcher = request.getRequestDispatcher(stringBuilder.toString());
+            dispatcher.forward(request, response);
+            return;
         }
     }
 
@@ -105,5 +109,5 @@ public class FrontController extends HttpServlet {
         } else {
             throw new TypeNotRecognizedException(object.getClass().getTypeName(), map);
         }
-    }   
+    }
 }
