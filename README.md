@@ -1,14 +1,16 @@
-framework_2624 est un framework web Java minimaliste conçu pour simplifier la création d'applications web dynamiques, en s'inspirant de concepts de Spring MVC tout en restant léger et flexible. Il propose les fonctionnalités suivantes :
+**framework_2624** is a minimalist web framework designed to simplify the creation of dynamic web applications, inspired by Spring MVC concepts while remaining lightweight and flexible. It offers the following features:
 
-@Controller : Annotation pour identifier les classes qui contiennent des points d'entrée pour les requêtes HTTP.
-@Get : Annotation pour gérer les requêtes HTTP GET (d'autres annotations pour POST, PUT, etc., peuvent être ajoutées).
-Front Controller : Gère les requêtes entrantes, identifie le contrôleur et la méthode appropriés, puis exécute le code associé.
-Renvoi de chaînes de caractères : Les méthodes de contrôleur peuvent renvoyer du contenu HTML brut.
-ModelAndView : Permet de renvoyer des objets contenant des données de modèle et des vues JSP.
-Analyse de package : Identifie automatiquement les classes de contrôleur dans un package spécifié.
-Démarrage rapide :
+- **@Controller**: Annotation to identify classes containing entry points for HTTP requests.
+- **@Get**: Annotation for handling HTTP GET requests (additional annotations for POST, PUT, etc., can be added).
+- **Front Controller**: Manages incoming requests, identifies the appropriate controller and method, and executes the associated code.
+- **Returning Strings**: Controller methods can return raw HTML content.
+- **ModelAndView**: Enables returning objects containing model data and JSP views.
+- **Package Scanning**: Automatically identifies controller classes within a specified package.
 
-Ajoutez Framework.jar à votre projet.
-Créez des classes de contrôleur annotées avec @Controller et gérez les requêtes avec @Get.
-Configurez le FrontController dans web.xml, en spécifiant le package des contrôleurs, le dossier des vues JSP, et le suffixe des fichiers de vue.
-Points à retenir : Le framework est basique mais extensible, avec la possibilité d'ajouter des fonctionnalités supplémentaires comme la gestion des formulaires et la validation des entrées.
+**Quick Start**:
+
+1. Add **Framework.jar** to your project.
+2. Create controller classes annotated with **@Controller**, and handle requests with **@Get**.
+3. Configure the FrontController in **web.xml**, specifying the controller package, JSP view folder, and view file suffix.
+
+**Key Takeaways**: The framework is basic but extensible, with the potential to add additional features such as form handling and input validation.
