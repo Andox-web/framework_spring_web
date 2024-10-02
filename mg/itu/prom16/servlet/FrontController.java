@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.gson.Gson;
+
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -100,7 +102,20 @@ public class FrontController extends HttpServlet {
 
     public void handleResponse(HttpServletRequest request, HttpServletResponse response, Mapping map) throws IOException, TypeNotRecognizedException, ServletException, IllegalArgumentException, MappingNotAllowedException, ArgumentException, ReflectiveOperationException {
         Object object = map.execute(request, response);
-        if (object instanceof String string) {
+
+        if (map.isRest()) {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            List<String> htmlContent = new ArrayList<>();
+                
+            if (object instanceof ModelAndView modelAndView) {
+                htmlContent.add(new Gson().toJson(modelAndView.getModel()));
+            }else{
+                htmlContent.add(new Gson().toJson(object));
+            }
+            writeToResponse(response, htmlContent);
+            
+        } else if (object instanceof String string) {
             List<String> htmlContent = new ArrayList<>();
             htmlContent.add(string);
             writeToResponse(response, htmlContent);

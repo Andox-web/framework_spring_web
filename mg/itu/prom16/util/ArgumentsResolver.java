@@ -1,5 +1,7 @@
 package mg.itu.prom16.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -8,8 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import mg.itu.prom16.annotation.mapping.Rest;
 import mg.itu.prom16.annotation.param.RequestBody;
 import mg.itu.prom16.annotation.param.RequestParam;
 import mg.itu.prom16.exception.request.ArgumentException;
@@ -19,16 +25,29 @@ public class ArgumentsResolver {
 
     private static final Object[] PARAMETER_ANNOTATIONS = {RequestParam.class,RequestBody.class};
 
-    public static Object[] resolveArguments(HttpServletRequest request, HttpServletResponse response, Mapping mapping) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException {
-        List<Object> args = new ArrayList<>();
+    public static Object[] resolveArguments(HttpServletRequest request, HttpServletResponse response, Mapping mapping) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException {
+        
+        JsonObject jsonObject = null;
+        if (mapping.isRest()) {
+            StringBuilder jsonBuffer = new StringBuilder();
+            String line;
+            try (BufferedReader reader = request.getReader()) {
+                while ((line = reader.readLine()) != null) {
+                    jsonBuffer.append(line);
+                }
+            }
+            jsonObject = JsonParser.parseString(jsonBuffer.toString()).getAsJsonObject();    
+        }
 
+        List<Object> args = new ArrayList<>();
+        
         // Récupérer les paramètres de la méthode associée au mapping
         Parameter[] parameters = mapping.getMethod().getParameters();
 
         for (Parameter parameter : parameters) {
             // Vérifier si le paramètre est annoté avec une des annotations de PARAMETER_ANNOTATIONS
             Annotation annotation = findParameterAnnotation(parameter);
-            Object arg = resolveCustomArgument(parameter, annotation, request, response);
+            Object arg = resolveCustomArgument(parameter, annotation, request, response, jsonObject);
             if (arg == null) {
                 throw new ArgumentException("Paramètre non géré : " + parameter.getName());
             }
@@ -52,7 +71,7 @@ public class ArgumentsResolver {
     }
 
     // Exemple de résolution d'un paramètre personnalisé avec annotation
-    private static Object resolveCustomArgument(Parameter parameter, Annotation annotation, HttpServletRequest request, HttpServletResponse response) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException {
+    private static Object resolveCustomArgument(Parameter parameter, Annotation annotation, HttpServletRequest request, HttpServletResponse response,JsonObject jsonObject) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException {
         if (annotation instanceof RequestParam) {
             String paramName = ((RequestParam) annotation).value();
             if (paramName.isEmpty()) {

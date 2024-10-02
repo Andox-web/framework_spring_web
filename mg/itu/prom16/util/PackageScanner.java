@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import mg.itu.prom16.mapping.Mapping;
 import mg.itu.prom16.mapping.MappingHandler;
 import mg.itu.prom16.annotation.mapping.GetMapping;
+import mg.itu.prom16.annotation.mapping.Rest;
 import mg.itu.prom16.exception.build.BuildException;
 import mg.itu.prom16.exception.build.DuplicateUrlException;
 
@@ -76,7 +77,13 @@ public class PackageScanner {
                     if (methods.containsKey(trimmedUrl)) {
                         throw new DuplicateUrlException(trimmedUrl);
                     }
-                    methods.put(trimmedUrl, new Mapping(clazz, method));
+                    Mapping mapping = new Mapping(clazz, method);
+                    methods.put(trimmedUrl, mapping);
+
+                    // Vérifier si la méthode est annotée avec @Rest
+                    if (mapping.getMethod().isAnnotationPresent(Rest.class)) {
+                        mapping.setRest(true);   
+                    }
                 }
             }
         } catch (SecurityException e) {
