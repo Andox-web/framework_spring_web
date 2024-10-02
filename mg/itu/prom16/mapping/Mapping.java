@@ -1,5 +1,6 @@
 package mg.itu.prom16.mapping;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -7,6 +8,8 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.gson.Gson;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,15 +21,24 @@ import mg.itu.prom16.util.ArgumentsResolver;
 public class Mapping {
     Class<?> controlleClass;    
     Method method;
+    boolean isRest;
+    
     public Mapping(Class<?> controlleClass, Method method) {
         this.controlleClass = controlleClass;
         this.method = method;
+        this.isRest=false;
     }
     public Class<?> getControlleClass() {
         return controlleClass;
     }
     public void setControlleClass(Class<?> controlleClass) {
         this.controlleClass = controlleClass;
+    }
+    public boolean isRest() {
+        return isRest;
+    }
+    public void setRest(boolean isRest) {
+        this.isRest = isRest;
     }
     public Method getMethod() {
         return method;
@@ -36,9 +48,11 @@ public class Mapping {
     }
     private Object execute(HttpServletRequest request,Object... arg) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
         Object instance= createInstance(controlleClass,request);
-        return method.invoke(instance, arg);
+        Object result = method.invoke(instance, arg);
+        
+        return result;
     }
-    public Object execute(HttpServletRequest request, HttpServletResponse response) throws MappingNotAllowedException, IllegalArgumentException, ArgumentException, ReflectiveOperationException {
+    public Object execute(HttpServletRequest request, HttpServletResponse response) throws MappingNotAllowedException, IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException{
         if (!MappingHandler.isAllowed(this, request, response)) {
             throw new MappingNotAllowedException("Mapping not allowed for current request.");
         }
