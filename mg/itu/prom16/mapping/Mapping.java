@@ -53,10 +53,6 @@ public class Mapping {
         return result;
     }
     public Object execute(HttpServletRequest request, HttpServletResponse response) throws MappingNotAllowedException, IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException{
-        if (!MappingHandler.isAllowed(this, request, response)) {
-            throw new MappingNotAllowedException("Mapping not allowed for current request.");
-        }
-
         return execute(request,ArgumentsResolver.resolveArguments(request, response, this));
     }
     private static Object createInstance(Class<?> controllerClass, HttpServletRequest request) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException  {
