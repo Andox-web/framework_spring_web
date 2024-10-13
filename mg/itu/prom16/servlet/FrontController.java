@@ -61,15 +61,18 @@ public class FrontController extends HttpServlet {
         } catch (MappingNotAllowedException e) {
             response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         } catch (ArgumentException|ReflectiveOperationException|SecurityException e) {
-            request.setAttribute("error", e);
+            if (getInitParameter("errorPage")!=null) {
+                request.setAttribute("error", e);
 
-            StringBuilder stringBuilder = new StringBuilder(getInitParameter("viewFolder"));
-            stringBuilder.append(getInitParameter("errorPage")!=null?getInitParameter("errorPage"):"error");
-            stringBuilder.append(getInitParameter("suffixe"));
+                StringBuilder stringBuilder = new StringBuilder(getInitParameter("viewFolder"));
+                stringBuilder.append(getInitParameter("errorPage"));
+                stringBuilder.append(getInitParameter("suffixe"));
 
-            RequestDispatcher dispatcher = request.getRequestDispatcher(stringBuilder.toString());
-            dispatcher.forward(request, response);
-            return;
+                RequestDispatcher dispatcher = request.getRequestDispatcher(stringBuilder.toString());
+                dispatcher.forward(request, response);
+                return;
+            }
+            ErrorPrinter.printExceptionHtml(response.getWriter(), e);
         }
     }
 
