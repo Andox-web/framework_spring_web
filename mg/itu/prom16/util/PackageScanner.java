@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 
 import mg.itu.prom16.mapping.Mapping;
 import mg.itu.prom16.mapping.MappingHandler;
+import mg.itu.prom16.mapping.VerbMapping;
 import mg.itu.prom16.annotation.mapping.GetMapping;
 import mg.itu.prom16.annotation.mapping.Rest;
 import mg.itu.prom16.exception.build.BuildException;
@@ -18,8 +19,8 @@ import mg.itu.prom16.exception.build.DuplicateUrlException;
 
 public class PackageScanner {
 
-    public static Map<String, Mapping> getMapping(String packageName, Class<? extends Annotation> annotationClass) throws BuildException {
-        Map<String, Mapping> map = new HashMap<>();
+    public static Map<VerbMapping, Mapping> getMapping(String packageName, Class<? extends Annotation> annotationClass) throws BuildException {
+        Map<VerbMapping, Mapping> map = new HashMap<>();
         try {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             String packagePath = packageName.replace(".", "/");
@@ -37,14 +38,7 @@ public class PackageScanner {
                                 try {
                                     Class<?> class1 = Class.forName(className);
                                     if (class1.isAnnotationPresent(annotationClass)) {
-                                        Map<String, Mapping> methods = new HashMap<>();
-                                        getMethods(class1, methods);
-                                        for (String url : methods.keySet()) {
-                                            if (map.containsKey(url)) {
-                                                throw new DuplicateUrlException(url);
-                                            }
-                                        }
-                                        map.putAll(methods);
+                                        getMethods(class1, map);
                                     }
                                 } catch (ClassNotFoundException e) {
                                     throw new BuildException("Class not found: " + className, e);
@@ -65,20 +59,17 @@ public class PackageScanner {
         return map;
     }
 
-    private static void getMethods(Class<?> clazz, Map<String, Mapping> methods) throws BuildException {
+    private static void getMethods(Class<?> clazz, Map<VerbMapping, Mapping> methods) throws BuildException {
         try {
             for (Method method : clazz.getDeclaredMethods()) {
-                String url =MappingHandler.getUrl(method);
+                VerbMapping url =MappingHandler.getUrl(method);
                 if (url != null) {
-                    if (url.isBlank()) {
-                        url=method.getName();
-                    }
-                    String trimmedUrl = url.trim();
-                    if (methods.containsKey(trimmedUrl)) {
-                        throw new DuplicateUrlException(trimmedUrl);
+                    
+                    if (methods.containsKey(url)) {
+                        throw new DuplicateUrlException(url.getUrl());
                     }
                     Mapping mapping = new Mapping(clazz, method);
-                    methods.put(trimmedUrl, mapping);
+                    methods.put(url, mapping);
 
                     // Vérifier si la méthode est annotée avec @Rest
                     if (mapping.getMethod().isAnnotationPresent(Rest.class)) {

@@ -18,29 +18,32 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.util.PackageScanner;
 import mg.itu.prom16.annotation.controller.Controller;
+import mg.itu.prom16.exception.ErrorPrinter;
 import mg.itu.prom16.exception.build.BuildException;
 import mg.itu.prom16.exception.request.ArgumentException;
 import mg.itu.prom16.exception.request.MappingNotAllowedException;
 import mg.itu.prom16.exception.request.TypeNotRecognizedException;
 import mg.itu.prom16.mapping.Mapping;
+import mg.itu.prom16.mapping.VerbMapping;
+import mg.itu.prom16.mapping.Mapper;
 
 public class FrontController extends HttpServlet {
 
-    Map<String,Mapping> controllerList;
+    Mapper mapper;
     Class<? extends Annotation > annClass=Controller.class;
     @Override
     public void init() throws ServletException {
         super.init();
         try {
-            controllerList=PackageScanner.getMapping(getInitParameter("controllerPackage"), annClass);
+            mapper=new Mapper(getInitParameter("controllerPackage"), annClass);
         } catch (BuildException e) {
             throw new Error(e);
         }
     }
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String path = request.getServletPath().trim();
-        Mapping map = controllerList.get(path);
+        VerbMapping verbMapping= new VerbMapping(request);
+        Mapping map = mapper.get(verbMapping);
         response.setContentType("text/html");
         try {
             if (map!=null) {
