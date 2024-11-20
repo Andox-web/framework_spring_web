@@ -13,19 +13,22 @@ import java.util.Map;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotation.mapping.Rest;
 import mg.itu.prom16.annotation.param.RequestBody;
 import mg.itu.prom16.annotation.param.RequestParam;
 import mg.itu.prom16.exception.request.ArgumentException;
 import mg.itu.prom16.mapping.Mapping;
+import mg.itu.prom16.servlet.MultipartFile;
 
 public class ArgumentsResolver {
 
     private static final Object[] PARAMETER_ANNOTATIONS = {RequestParam.class,RequestBody.class};
 
-    public static Object[] resolveArguments(HttpServletRequest request, HttpServletResponse response, Mapping mapping) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException {
+    public static Object[] resolveArguments(HttpServletRequest request, HttpServletResponse response, Mapping mapping) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
         
         JsonObject jsonObject = null;
         if (mapping.isRest()) {
@@ -71,14 +74,30 @@ public class ArgumentsResolver {
     }
 
     // Exemple de résolution d'un paramètre personnalisé avec annotation
-    private static Object resolveCustomArgument(Parameter parameter, Annotation annotation, HttpServletRequest request, HttpServletResponse response,JsonObject jsonObject) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException {
+    private static Object resolveCustomArgument(Parameter parameter, Annotation annotation, HttpServletRequest request, HttpServletResponse response,JsonObject jsonObject) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
         if (annotation instanceof RequestParam) {
             String paramName = ((RequestParam) annotation).value();
             if (paramName.isEmpty()) {
                 paramName = parameter.getName();
             }
+
+            Class<?> type = parameter.getType();
+
+            if (type.equals(MultipartFile.class)) {
+                Part part = request.getPart(paramName);
+                if (part==null) {
+                    return null;
+                }
+                return new MultipartFile(part); 
+            }
+
             String paramValue = request.getParameter(paramName);
-            return TypeResolver.castValue(paramValue,parameter.getType());
+
+            if (paramValue == null) {
+                return null;
+            }
+
+            return TypeResolver.castValue(paramValue, type);
         }else if (annotation instanceof RequestBody) {
             try {
                 
