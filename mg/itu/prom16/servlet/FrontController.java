@@ -43,6 +43,7 @@ public class FrontController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         VerbMapping verbMapping= new VerbMapping(request);
+        System.out.println("map "+verbMapping);
         Mapping map = mapper.get(verbMapping);
         response.setContentType("text/html");
         try {

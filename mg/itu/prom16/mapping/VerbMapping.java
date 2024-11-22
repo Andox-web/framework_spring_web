@@ -13,7 +13,7 @@ import mg.itu.prom16.annotation.mapping.GetMapping;
 import mg.itu.prom16.annotation.mapping.PostMapping;
 import mg.itu.prom16.annotation.mapping.Url;
 
-public class VerbMapping {
+public class VerbMapping implements Comparable {
     private static final Map<Class<? extends Annotation>, String> annotationMap = new HashMap<>();
 
     static {
@@ -35,9 +35,11 @@ public class VerbMapping {
     public boolean equals(Object obj) {
         if (obj instanceof VerbMapping) {
             VerbMapping verbMapping=(VerbMapping) obj;
+            System.out.println(verbMapping.url+"  "+url);
             if (url.equals(verbMapping.url)) {
+                System.out.println("lien");
                 for (String entry : verbMapping.ListVerb) {
-                    if (ListVerb.contains(entry)) {
+                    if (this.ListVerb.contains(entry)) {
                         return true;
                     }
                 }
@@ -45,7 +47,14 @@ public class VerbMapping {
         }
         return false;
     }
-
+    @Override
+    public int hashCode() {
+        int result = url.hashCode();
+        for (String verb : ListVerb) {
+            result = 31 * result + verb.hashCode();
+        }
+        return result;
+    }
     public static VerbMapping getVerbMapping(Method method,Class<? extends Annotation> URL){
         VerbMapping verbMapping = new VerbMapping();
         verbMapping.setUrl(Url.class.cast(method.getAnnotation(URL)).value());
@@ -55,7 +64,7 @@ public class VerbMapping {
                 set.add(annotationMap.get(Annotation));
             }
         }
-
+        verbMapping.setListVerb(set);
         return verbMapping;
     }
 
@@ -74,6 +83,45 @@ public class VerbMapping {
     public void setUrl(String url) {
         this.url = url;
     }
+    @Override
+    public String toString() {
+        return "url "+url+" ListVerb "+ListVerb;
+    }
+    @Override
+    public int compareTo(Object o) {
+        if (o instanceof VerbMapping) {
+            VerbMapping verbMapping = (VerbMapping) o;
 
-    
+            // Comparaison basée sur l'URL
+            int urlComparison = this.url.compareTo(verbMapping.url);
+            
+            if (urlComparison != 0) {
+                // Si les URLs sont différentes, on renvoie la comparaison de ces URLs
+                return urlComparison;
+            }
+
+            // Si les URLs sont égales, on compare les éléments dans ListVerb
+            // Utilisation de la méthode contains pour voir si la ListVerb contient au moins un élément en commun
+            boolean hasCommonVerb = false;
+            for (String entry : verbMapping.ListVerb) {
+                if (this.ListVerb.contains(entry)) {
+                    hasCommonVerb = true;
+                    break;
+                }
+            }
+
+            // Si un verb commun est trouvé, les objets sont considérés égaux (retour 0)
+            if (hasCommonVerb) {
+                return 0; // égaux
+            } else {
+                // Si pas de verb commun, on peut décider de renvoyer une valeur négative ou positive
+                // Par exemple, on pourrait décider que la comparaison des verbes affecte l'ordre
+                return 1; // Par exemple, si aucun verb commun, on les considère comme "plus grands"
+            }
+        }
+        
+        // Si l'objet n'est pas du même type, on renvoie un nombre positif (ou négatif)
+        return 1; // Ou éventuellement 0 ou une valeur négative selon votre logique
+    }
+
 }
