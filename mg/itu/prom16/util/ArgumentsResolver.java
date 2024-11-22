@@ -23,6 +23,7 @@ import mg.itu.prom16.annotation.param.RequestParam;
 import mg.itu.prom16.exception.request.ArgumentException;
 import mg.itu.prom16.mapping.Mapping;
 import mg.itu.prom16.servlet.MultipartFile;
+import mg.itu.prom16.validation.BindingResult;
 
 public class ArgumentsResolver {
 
@@ -30,18 +31,6 @@ public class ArgumentsResolver {
 
     public static Object[] resolveArguments(HttpServletRequest request, HttpServletResponse response, Mapping mapping) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
         
-        JsonObject jsonObject = null;
-        if (mapping.isRest()) {
-            StringBuilder jsonBuffer = new StringBuilder();
-            String line;
-            try (BufferedReader reader = request.getReader()) {
-                while ((line = reader.readLine()) != null) {
-                    jsonBuffer.append(line);
-                }
-            }
-            jsonObject = JsonParser.parseString(jsonBuffer.toString()).getAsJsonObject();    
-        }
-
         List<Object> args = new ArrayList<>();
         
         // Récupérer les paramètres de la méthode associée au mapping
@@ -50,7 +39,7 @@ public class ArgumentsResolver {
         for (Parameter parameter : parameters) {
             // Vérifier si le paramètre est annoté avec une des annotations de PARAMETER_ANNOTATIONS
             Annotation annotation = findParameterAnnotation(parameter);
-            Object arg = resolveCustomArgument(parameter, annotation, request, response, jsonObject);
+            Object arg = resolveCustomArgument(parameter, annotation, request, response);
             if (arg == null) {
                 throw new ArgumentException("Paramètre non géré : " + parameter.getName());
             }
@@ -74,15 +63,19 @@ public class ArgumentsResolver {
     }
 
     // Exemple de résolution d'un paramètre personnalisé avec annotation
-    private static Object resolveCustomArgument(Parameter parameter, Annotation annotation, HttpServletRequest request, HttpServletResponse response,JsonObject jsonObject) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
+    private static Object resolveCustomArgument(Parameter parameter, Annotation annotation, HttpServletRequest request, HttpServletResponse response) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
+        Class<?> type = parameter.getType();
+
+        if(type.equals(BindingResult.class)){
+            return new BindingResult();
+        }
         if (annotation instanceof RequestParam) {
             String paramName = ((RequestParam) annotation).value();
             if (paramName.isEmpty()) {
                 paramName = parameter.getName();
             }
 
-            Class<?> type = parameter.getType();
-
+            
             if (type.equals(MultipartFile.class)) {
                 Part part = request.getPart(paramName);
                 if (part==null) {

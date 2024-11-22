@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
@@ -20,7 +21,7 @@ import mg.itu.prom16.exception.build.DuplicateUrlException;
 public class PackageScanner {
 
     public static Map<VerbMapping, Mapping> getMapping(String packageName, Class<? extends Annotation> annotationClass) throws BuildException {
-        Map<VerbMapping, Mapping> map = new HashMap<>();
+        Map<VerbMapping, Mapping> map = new TreeMap<>();
         try {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             String packagePath = packageName.replace(".", "/");

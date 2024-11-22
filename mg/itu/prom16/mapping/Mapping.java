@@ -11,12 +11,14 @@ import java.util.List;
 
 import com.google.gson.Gson;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.exception.request.ArgumentException;
 import mg.itu.prom16.exception.request.MappingNotAllowedException;
 import mg.itu.prom16.servlet.Session;
 import mg.itu.prom16.util.ArgumentsResolver;
+import mg.itu.prom16.validation.ValidationScanner;
 
 public class Mapping {
     Class<?> controlleClass;    
@@ -52,8 +54,11 @@ public class Mapping {
         
         return result;
     }
-    public Object execute(HttpServletRequest request, HttpServletResponse response) throws MappingNotAllowedException, IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException{
-        return execute(request,ArgumentsResolver.resolveArguments(request, response, this));
+    public Object execute(HttpServletRequest request, HttpServletResponse response) throws MappingNotAllowedException, IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException{
+        Object[] args =ArgumentsResolver.resolveArguments(request, response, this);
+        ValidationScanner validationScanner = new ValidationScanner();
+        validationScanner.scanAndValidate(method, args);;
+        return execute(request,args);
     }
     private static Object createInstance(Class<?> controllerClass, HttpServletRequest request) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException  {
         // Obtenir le constructeur par défaut

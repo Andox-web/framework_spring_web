@@ -27,7 +27,5 @@ javac -parameters -cp %LIB_DIR%\* -d "..\temp%APP_NAME%\tempclass" "..\temp%APP_
 REM Copy library JAR files to the temporary directory
 XCOPY /Y "%LIB_DIR%\*.jar" "..\temp%APP_NAME%\templib"
 
-cd ..\temp%APP_NAME%\tempclass
-
 REM Create a JAR file including the compiled classes and library JARs
-jar cvf "%JAR_FILE%" -C "..\temp%APP_NAME%\tempclass" . -C "..\temp%APP_NAME%\templib" .
+jar cvf "%JAR_FILE%" -C "..\temp%APP_NAME%\tempclass" . 
