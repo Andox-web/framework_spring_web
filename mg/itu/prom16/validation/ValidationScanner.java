@@ -35,11 +35,11 @@ public class ValidationScanner {
 
         // Étape 2 : Valider les champs des arguments annotés avec @Valid
         for (int i = 0; i < parameters.length; i++) {
+            Object argument = args[i];
+            
+            bindingResult.addField(parameters[i].getName(), argument);
+
             if (parameters[i].isAnnotationPresent(Valid.class)) {
-                Object argument = args[i];
-                if (argument == bindingResult) {
-                    continue;
-                }
                 validator.validate(argument, bindingResult);
             }
         }

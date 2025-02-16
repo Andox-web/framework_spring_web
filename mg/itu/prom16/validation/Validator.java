@@ -10,7 +10,6 @@ public class Validator {
 
     // Méthode principale de validation qui parcourt tous les champs d'un objet
     public void validate(Object object, BindingResult bindingResult) {
-        System.out.println("validate" + object);
         if (object == null) {
             bindingResult.addError("object", null, "L'objet à valider est nul.");
             return;
@@ -57,7 +56,7 @@ public class Validator {
         if (fieldValue == null || fieldValue.toString().trim().isEmpty()) {
             NotBlank annotation = field.getAnnotation(NotBlank.class);
             String message = annotation.message();
-            bindingResult.addError(field.getName(), fieldValue != null ? fieldValue.toString() : null, message.isEmpty() ? field.getName() + " ne doit pas être vide." : message);
+            bindingResult.addError(field.getName(), fieldValue, message.isEmpty() ? field.getName() + " ne doit pas être vide." : message);
         }
     }
 
@@ -69,7 +68,7 @@ public class Validator {
             if (!pattern.matcher(fieldValue.toString()).matches()) {
                 Email annotation = field.getAnnotation(Email.class);
                 String message = annotation.message();
-                bindingResult.addError(field.getName(), fieldValue.toString(), message.isEmpty() ? field.getName() + " doit être un email valide." : message);
+                bindingResult.addError(field.getName(), fieldValue, message.isEmpty() ? field.getName() + " doit être un email valide." : message);
             }
         }
     }
@@ -83,7 +82,7 @@ public class Validator {
 
             if (length < min || length > max) {
                 String message = sizeAnnotation.message();
-                bindingResult.addError(field.getName(), fieldValue.toString(), message.isEmpty() ? field.getName() + " doit avoir entre " + min + " et " + max + " caractères." : message);
+                bindingResult.addError(field.getName(), fieldValue, message.isEmpty() ? field.getName() + " doit avoir entre " + min + " et " + max + " caractères." : message);
             }
         }
     }
@@ -94,10 +93,10 @@ public class Validator {
             if (((Number) fieldValue).doubleValue() <= 0) {
                 Positive annotation = field.getAnnotation(Positive.class);
                 String message = annotation.message();
-                bindingResult.addError(field.getName(), fieldValue.toString(), message.isEmpty() ? field.getName() + " doit être un nombre positif." : message);
+                bindingResult.addError(field.getName(), fieldValue , message.isEmpty() ? field.getName() + " doit être un nombre positif." : message);
             }
         } else {
-            bindingResult.addError(field.getName(), fieldValue != null ? fieldValue.toString() : null, field.getName() + " doit être un nombre.");
+            bindingResult.addError(field.getName(), fieldValue, field.getName() + " doit être un nombre.");
         }
     }
 
@@ -108,10 +107,10 @@ public class Validator {
             if (((java.util.Date) fieldValue).before(currentDate)) {
                 Future annotation = field.getAnnotation(Future.class);
                 String message = annotation.message();
-                bindingResult.addError(field.getName(), fieldValue.toString(), message.isEmpty() ? field.getName() + " doit être une date dans le futur." : message);
+                bindingResult.addError(field.getName(), fieldValue, message.isEmpty() ? field.getName() + " doit être une date dans le futur." : message);
             }
         } else {
-            bindingResult.addError(field.getName(), fieldValue != null ? fieldValue.toString() : null, field.getName() + " doit être une date.");
+            bindingResult.addError(field.getName(), fieldValue , field.getName() + " doit être une date.");
         }
     }
 }

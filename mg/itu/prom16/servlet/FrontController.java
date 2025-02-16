@@ -90,9 +90,7 @@ public class FrontController extends HttpServlet {
 
                 RequestDispatcher dispatcher = request.getRequestDispatcher(stringBuilder.toString());
                 dispatcher.forward(request, response);
-                return;
-            }
-            ErrorPrinter.printExceptionHtml(response.getWriter(), e);
+            }else ErrorPrinter.printExceptionHtml(response.getWriter(), e);
         } finally {
             for (Interceptor interceptor : interceptors) {
                 try {
