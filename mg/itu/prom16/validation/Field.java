@@ -3,12 +3,12 @@ package mg.itu.prom16.validation;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FieldError {
+public class Field {
     private String fieldName;
-    private String fieldValue;
+    private Object fieldValue;
     private List<String> errors = new ArrayList<>();
 
-    public FieldError(String fieldName, String fieldValue) {
+    public Field(String fieldName, Object fieldValue) {
         this.fieldName = fieldName;
         this.fieldValue = fieldValue;
     }
@@ -21,7 +21,7 @@ public class FieldError {
         return fieldName;
     }
 
-    public String getFieldValue() {
+    public Object getFieldValue() {
         return fieldValue;
     }
 

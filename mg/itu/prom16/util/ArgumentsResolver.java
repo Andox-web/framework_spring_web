@@ -25,7 +25,7 @@ import mg.itu.prom16.response.RedirectAttributesMap;
 
 public class ArgumentsResolver {
 
-    private static final Object[] PARAMETER_ANNOTATIONS = {RequestParam.class,RequestBody.class};
+    private static final Class<? extends Annotation>[] PARAMETER_ANNOTATIONS = new Class[]{RequestParam.class, RequestBody.class};
 
     public static Object[] resolveArguments(HttpServletRequest request, HttpServletResponse response, Mapping mapping) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
         
@@ -36,35 +36,20 @@ public class ArgumentsResolver {
 
         for (Parameter parameter : parameters) {
             // Vérifier si le paramètre est annoté avec une des annotations de PARAMETER_ANNOTATIONS
-            Annotation annotation = findParameterAnnotation(parameter);
-            Object arg = resolveCustomArgument(parameter, annotation, request, response);
+            Object arg = resolveCustomArgument(parameter, mapping.getMethod(), request, response);
             if (arg == null) {
                 throw new ArgumentException("Paramètre non géré : " + parameter.getName());
             }
             args.add(arg);
-            
         }
-        
 
         return args.toArray(new Object[0]);
     }
 
-    // Méthode pour rechercher une annotation sur un paramètre
-    private static  Annotation findParameterAnnotation(Parameter parameter) {
-        for (Object annotationClass : PARAMETER_ANNOTATIONS) {
-            Annotation annotation = parameter.getAnnotation((Class<? extends Annotation>) annotationClass);
-            if (annotation != null) {
-                return annotation;
-            }
-        }
-        return null;
-    }
-
-    // Exemple de résolution d'un paramètre personnalisé avec annotation
-    private static Object resolveCustomArgument(Parameter parameter, Annotation annotation, HttpServletRequest request, HttpServletResponse response) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
+    private static Object resolveCustomArgument(Parameter parameter, Object method, HttpServletRequest request, HttpServletResponse response) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
         Class<?> type = parameter.getType();
 
-        if(type.equals(BindingResult.class)){
+        if (type.equals(BindingResult.class)) {
             return new BindingResult();
         }
         if (type.equals(Session.class)) {
@@ -82,46 +67,50 @@ public class ArgumentsResolver {
         if (Model.class.isAssignableFrom(type)) {
             return new ModelMap();
         }
-        if (annotation instanceof RequestParam) {
-            String paramName = ((RequestParam) annotation).value();
-            if (paramName.isEmpty()) {
-                paramName = parameter.getName();
-            }
 
-            
-            if (type.equals(MultipartFile.class)) {
-                Part part = request.getPart(paramName);
-                if (part==null) {
-                    return null;
-                }
-                return new MultipartFile(part); 
-            }
+        for (Class<? extends Annotation> annotationClass : PARAMETER_ANNOTATIONS) {
+            if (parameter.isAnnotationPresent(annotationClass)) {
+                Annotation annotation = parameter.getAnnotation(annotationClass);
+                if (annotation instanceof RequestParam) {
+                    String paramName = ((RequestParam) annotation).value();
+                    if (paramName.isEmpty()) {
+                        paramName = parameter.getName();
+                    }
 
-            String paramValue = request.getParameter(paramName);
+                    if (type.equals(MultipartFile.class)) {
+                        Part part = request.getPart(paramName);
+                        if (part == null) {
+                            return null;
+                        }
+                        return new MultipartFile(part);
+                    }
 
-            if (paramValue == null) {
-                return null;
-            }
+                    String paramValue = request.getParameter(paramName);
 
-            return TypeResolver.castValue(paramValue, type);
-        }else if (annotation instanceof RequestBody) {
-            try {
-                
-                Constructor<?> constructor = parameter.getType().getDeclaredConstructor();
-                Object obj = constructor.newInstance();
-                
-                for (Field field : obj.getClass().getDeclaredFields()) {
-                    String fieldName = field.getName();
-                    String paramValue = request.getParameter(fieldName);
-                    if (paramValue != null) {
-                        field.setAccessible(true);
-                        field.set(obj, TypeResolver.castValue(paramValue, field.getType()));
+                    if (paramValue == null) {
+                        return null;
+                    }
+
+                    return TypeResolver.castValue(paramValue, type);
+                } else if (annotation instanceof RequestBody) {
+                    try {
+                        Constructor<?> constructor = parameter.getType().getDeclaredConstructor();
+                        Object obj = constructor.newInstance();
+
+                        for (Field field : obj.getClass().getDeclaredFields()) {
+                            String fieldName = field.getName();
+                            String paramValue = request.getParameter(fieldName);
+                            if (paramValue != null) {
+                                field.setAccessible(true);
+                                field.set(obj, TypeResolver.castValue(paramValue, field.getType()));
+                            }
+                        }
+
+                        return obj;
+                    } catch (InstantiationException | IllegalAccessException e) {
+                        throw new ArgumentException(e);
                     }
                 }
-
-                return obj;
-            } catch (InstantiationException | IllegalAccessException e) {
-               throw new ArgumentException(e);
             }
         }
 

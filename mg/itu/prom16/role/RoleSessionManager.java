@@ -1,22 +1,23 @@
 package mg.itu.prom16.role;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotation.RejectRole;
 import mg.itu.prom16.annotation.RoleRequired;
 import mg.itu.prom16.exception.build.BuildException;
+import mg.itu.prom16.exception.UnauthorizedException;
 
 public class RoleSessionManager {
 
     private Object sessionObject;
     private String sessionName;
     private RoleMatcher roleMatcher;
+    private String unauthorizedRedirectUrl;
 
     public RoleSessionManager(HttpServletRequest request) throws BuildException {
-        this.sessionName = request.getServletContext().getInitParameter("sessionName");
+        this.sessionName = request.getServletContext().getInitParameter("roleSessionName");
         if (this.sessionName == null || this.sessionName.isEmpty()) {
             this.sessionName = "roleSession";
         }
@@ -34,6 +35,8 @@ public class RoleSessionManager {
         } else {
             this.roleMatcher = new StringRoleMatcher();
         }
+
+        this.unauthorizedRedirectUrl = request.getServletContext().getInitParameter("unauthorizedRedirectUrl");
     }
 
     public boolean hasRole(String[] roles) {
@@ -48,20 +51,77 @@ public class RoleSessionManager {
         return false;
     }
 
-    public boolean checkRole(Method method, HttpServletResponse response) throws Exception {
-        RoleRequired roleRequired = method.getAnnotation(RoleRequired.class);
-        if (roleRequired != null) {
-            if(sessionObject==null || (roleRequired.value().length!=0 && !hasRole(roleRequired.value()))) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN);
-                return false;
+    private boolean checkAnnotation(Object annotation) throws UnauthorizedException {
+        if (annotation instanceof RoleRequired) {
+            RoleRequired roleRequired = (RoleRequired) annotation;
+            if (sessionObject == null || (roleRequired.value().length != 0 && !hasRole(roleRequired.value()))) {
+                throw new UnauthorizedException("Unauthorized");
+            }
+        } else if (annotation instanceof RejectRole) {
+            RejectRole rejectRole = (RejectRole) annotation;
+            if (hasRole(rejectRole.value())) {
+                throw new UnauthorizedException("Unauthorized");
             }
         }
+        return true;
+    }
 
-        RejectRole rejectRole = method.getAnnotation(RejectRole.class);
-        if (rejectRole != null && hasRole(rejectRole.value())) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+    public boolean checkClassAndMethodAnnotations(Class<? extends Annotation> annotationClass, Method method) throws UnauthorizedException {
+        Class<?> declaringClass = method.getDeclaringClass();
+
+        Object classRoleRequired = declaringClass.getAnnotation(annotationClass);
+        if (classRoleRequired != null && !checkAnnotation(classRoleRequired)) {
+            return false;
+        }
+
+        Object methodRoleRequired = method.getAnnotation(annotationClass);
+        if (methodRoleRequired != null && !checkAnnotation(methodRoleRequired)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean checkRole(Method method) throws UnauthorizedException {
+        if (!checkClassAndMethodAnnotations(RoleRequired.class, method)) {
+            return false;
+        }
+        if (!checkClassAndMethodAnnotations(RejectRole.class, method)) {
             return false;
         }
         return true;
     }
+
+    public Object getSessionObject() {
+        return sessionObject;
+    }
+
+    public void setSessionObject(Object sessionObject) {
+        this.sessionObject = sessionObject;
+    }
+
+    public String getSessionName() {
+        return sessionName;
+    }
+
+    public void setSessionName(String sessionName) {
+        this.sessionName = sessionName;
+    }
+
+    public RoleMatcher getRoleMatcher() {
+        return roleMatcher;
+    }
+
+    public void setRoleMatcher(RoleMatcher roleMatcher) {
+        this.roleMatcher = roleMatcher;
+    }
+
+    public String getUnauthorizedRedirectUrl() {
+        return unauthorizedRedirectUrl;
+    }
+
+    public void setUnauthorizedRedirectUrl(String unauthorizedRedirectUrl) {
+        this.unauthorizedRedirectUrl = unauthorizedRedirectUrl;
+    }
+    
 }
