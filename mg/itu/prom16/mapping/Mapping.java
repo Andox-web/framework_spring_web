@@ -4,13 +4,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.google.gson.Gson;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +13,9 @@ import mg.itu.prom16.exception.request.MappingNotAllowedException;
 import mg.itu.prom16.servlet.Session;
 import mg.itu.prom16.util.ArgumentsResolver;
 import mg.itu.prom16.validation.ValidationScanner;
+import mg.itu.prom16.response.ModelAndView;
+import mg.itu.prom16.response.ResponseHandler;
+import mg.itu.prom16.response.StringResponseHandler;
 
 public class Mapping {
     Class<?> controlleClass;    
@@ -48,18 +45,36 @@ public class Mapping {
     public void setMethod(Method method) {
         this.method = method;
     }
-    private Object execute(HttpServletRequest request,Object... arg) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
-        Object instance= createInstance(controlleClass,request);
+
+    
+    private ExecutionResult execute(HttpServletRequest request, HttpServletResponse response, Object... arg) 
+            throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException, IOException, ServletException {
+        Object instance = createInstance(controlleClass, request);
         Object result = method.invoke(instance, arg);
-        
-        return result;
+
+        for (Object argument : arg) {
+            if (argument instanceof ResponseHandler responseHandler) {
+                responseHandler.handleAction(request, response);
+            }
+        }
+
+        if (result instanceof String stringResult) {
+            if (!StringResponseHandler.startsWithAny(stringResult)) {
+                result = new ModelAndView(stringResult);
+            }
+        }
+
+        return new ExecutionResult(result, arg, this);
     }
-    public Object execute(HttpServletRequest request, HttpServletResponse response) throws MappingNotAllowedException, IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException{
-        Object[] args =ArgumentsResolver.resolveArguments(request, response, this);
+
+    public ExecutionResult execute(HttpServletRequest request, HttpServletResponse response) 
+            throws MappingNotAllowedException, IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
+        Object[] args = ArgumentsResolver.resolveArguments(request, response, this);
         ValidationScanner validationScanner = new ValidationScanner();
-        validationScanner.scanAndValidate(method, args);;
-        return execute(request,args);
+        validationScanner.scanAndValidate(method, args);
+        return execute(request, response, args);
     }
+
     private static Object createInstance(Class<?> controllerClass, HttpServletRequest request) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException  {
         // Obtenir le constructeur par défaut
         Constructor<?> constructor = controllerClass.getDeclaredConstructor();
@@ -85,4 +100,5 @@ public class Mapping {
 
         return instance;
     }
+
 }
