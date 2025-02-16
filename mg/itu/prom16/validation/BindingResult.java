@@ -1,23 +1,35 @@
 package mg.itu.prom16.validation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BindingResult {
-    private List<String> errors = new ArrayList<>();
+    private Map<String, FieldError> fieldErrors = new HashMap<>();
 
-    // Ajoute une erreur à la liste des erreurs
-    public void addError(String errorMessage) {
-        errors.add(errorMessage);
+    public void addError(String fieldName, String fieldValue, String errorMessage) {
+        FieldError fieldError = fieldErrors.getOrDefault(fieldName, new FieldError(fieldName, fieldValue));
+        fieldError.addError(errorMessage);
+        fieldErrors.put(fieldName, fieldError);
     }
 
-    // Vérifie si des erreurs existent
     public boolean hasErrors() {
-        return !errors.isEmpty();
+        if (!fieldErrors.isEmpty()) {
+            for (FieldError fieldError : fieldErrors.values()) {
+                if (fieldError.hasErrors()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
-    // Récupère toutes les erreurs
-    public List<String> getErrors() {
-        return errors;
+    public List<FieldError> getErrors() {
+        return new ArrayList<>(fieldErrors.values());
+    }
+
+    public FieldError getErrors(String fieldName) {
+        return fieldErrors.get(fieldName);
     }
 }

@@ -2,12 +2,7 @@ package mg.itu.prom16.mapping;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import mg.itu.prom16.annotation.mapping.GetMapping;
-import mg.itu.prom16.annotation.mapping.PostMapping;
 import mg.itu.prom16.annotation.mapping.Url;
-import mg.itu.prom16.exception.request.MappingNotAllowedException;
 
 public class MappingHandler {
     // Liste statique des annotations de mapping

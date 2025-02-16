@@ -2,7 +2,6 @@ package mg.itu.prom16.validation;
 
 import mg.itu.prom16.annotation.validation.Valid;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
@@ -20,7 +19,6 @@ public class ValidationScanner {
         }
 
         Parameter[] parameters = method.getParameters();
-        System.out.println(parameters.length+"  params");
         BindingResult bindingResult = null;
 
         // Étape 1 : Rechercher BindingResult dans les arguments
@@ -45,14 +43,5 @@ public class ValidationScanner {
                 validator.validate(argument, bindingResult);
             }
         }
-
-        // Étape 3 : Afficher les résultats de validation
-        if (bindingResult.hasErrors()) {
-            System.out.println("Erreurs détectées : " + bindingResult.getErrors());
-        } else {
-            System.out.println("Validation réussie !");
-        }
-    }
-
-   
+    }   
 }

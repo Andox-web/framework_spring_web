@@ -1,6 +1,5 @@
 package mg.itu.prom16.util;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -8,22 +7,21 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
-import mg.itu.prom16.annotation.mapping.Rest;
 import mg.itu.prom16.annotation.param.RequestBody;
 import mg.itu.prom16.annotation.param.RequestParam;
 import mg.itu.prom16.exception.request.ArgumentException;
 import mg.itu.prom16.mapping.Mapping;
 import mg.itu.prom16.servlet.MultipartFile;
+import mg.itu.prom16.servlet.Session;
 import mg.itu.prom16.validation.BindingResult;
+import mg.itu.prom16.response.Model;
+import mg.itu.prom16.response.ModelMap;
+import mg.itu.prom16.response.RedirectAttributes;
+import mg.itu.prom16.response.RedirectAttributesMap;
 
 public class ArgumentsResolver {
 
@@ -68,6 +66,21 @@ public class ArgumentsResolver {
 
         if(type.equals(BindingResult.class)){
             return new BindingResult();
+        }
+        if (type.equals(Session.class)) {
+            return new Session(request);
+        }
+        if (type.equals(HttpServletRequest.class)) {
+            return request;
+        }
+        if (type.equals(HttpServletResponse.class)) {
+            return response;
+        }
+        if (RedirectAttributes.class.isAssignableFrom(type)) {
+            return new RedirectAttributesMap();
+        }
+        if (Model.class.isAssignableFrom(type)) {
+            return new ModelMap();
         }
         if (annotation instanceof RequestParam) {
             String paramName = ((RequestParam) annotation).value();
