@@ -62,6 +62,11 @@ public class VerbMapping implements Comparable<VerbMapping> {
                 set.add(annotationMap.get(Annotation));
             }
         }
+
+        if (set.isEmpty()) {
+            set.add("GET");
+        }
+        
         verbMapping.setListVerb(set);
         return verbMapping;
     }

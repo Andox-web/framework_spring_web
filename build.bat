@@ -6,7 +6,7 @@ SET APP_DIR=%~dp0
 SET SRC_DIR=%APP_DIR%mg
 SET LIB_DIR=%APP_DIR%lib
 SET BUILD_DIR=%APP_DIR%build
-SET DEST_DIR=%BUILD_DIR%\dist
+SET DEST_DIR=E:\dev\App-temoin-framework-spring\lib
 SET JAR_FILE=%BUILD_DIR%\%APP_NAME%.jar
 
 REM Create necessary directories

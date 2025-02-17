@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotation.controller.Controller;
+import mg.itu.prom16.annotation.response.ResponseBody;
 import mg.itu.prom16.exception.ErrorPrinter;
 import mg.itu.prom16.exception.build.BuildException;
 import mg.itu.prom16.exception.request.MappingNotAllowedException;
@@ -47,6 +48,14 @@ public class FrontController extends HttpServlet {
     }
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
+        String url = request.getServletPath();
+        if (url.startsWith("/resources")||url.startsWith("/assets")) {
+            RequestDispatcher dispatcher = request.getRequestDispatcher(url);
+            dispatcher.forward(request, response);
+            return;
+        }
+
         VerbMapping verbMapping= new VerbMapping(request);
         Mapping map = mapper.get(verbMapping);
         response.setContentType("text/html");
@@ -91,6 +100,7 @@ public class FrontController extends HttpServlet {
                 RequestDispatcher dispatcher = request.getRequestDispatcher(stringBuilder.toString());
                 dispatcher.forward(request, response);
             }else ErrorPrinter.printExceptionHtml(response.getWriter(), e);
+            e.printStackTrace();
         } finally {
             for (Interceptor interceptor : interceptors) {
                 try {
@@ -117,7 +127,11 @@ public class FrontController extends HttpServlet {
     public void handleResponse(HttpServletRequest request, HttpServletResponse response, ExecutionResult executionResult) throws Exception {
         Object object = executionResult.getResult();
         
-        if (executionResult.getMapping().isRest()) {
+        if (executionResult.getMapping().isRest()||executionResult.getMapping().getMethod().isAnnotationPresent(ResponseBody.class)) {
+            if (object instanceof ResponseHandler responseHandler) {
+               stringResponseHandler.handleJsonResponse(response, responseHandler.getGsonnableResponse());
+                return;
+            }
             stringResponseHandler.handleJsonResponse(response, object);
         } else if (object instanceof String string) {
             stringResponseHandler.handleStringResponse(request, response, string);

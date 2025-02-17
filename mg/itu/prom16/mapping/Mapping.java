@@ -57,13 +57,7 @@ public class Mapping {
                 responseHandler.handleAction(request, response);
             }
         }
-
-        if (result instanceof String stringResult) {
-            if (!StringResponseHandler.startsWithAny(stringResult)) {
-                result = new ModelAndView(stringResult);
-            }
-        }
-
+        
         return new ExecutionResult(result, arg, this);
     }
 
