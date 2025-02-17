@@ -30,9 +30,8 @@ public class StringResponseHandler {
         if (startsWithAny(string)) {
             handleSpecialPrefix(request, response, string);
         } else {
-            List<String> htmlContent = new ArrayList<>();
-            htmlContent.add(string);
-            writeToResponse(response, htmlContent);
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/jsp/"+string+".jsp");
+            dispatcher.forward(request, response);
         }
     }
 
