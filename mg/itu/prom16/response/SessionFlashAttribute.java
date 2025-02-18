@@ -5,7 +5,7 @@ import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.ServletContext;
+import mg.itu.prom16.util.Environment;
 
 public class SessionFlashAttribute implements FlashMapManager {
     private static final String DEFAULT_FLASH_MAP_SESSION_ATTRIBUTE = "flashDataAttribute";
@@ -34,8 +34,6 @@ public class SessionFlashAttribute implements FlashMapManager {
     }
 
     private String getFlashMapSessionAttribute(HttpServletRequest request) {
-        ServletContext context = request.getServletContext();
-        String controllerPackage = context.getInitParameter("flashMapSession");
-        return (controllerPackage != null) ? controllerPackage : DEFAULT_FLASH_MAP_SESSION_ATTRIBUTE;
+        return Environment.getProperty("flashMapSession", DEFAULT_FLASH_MAP_SESSION_ATTRIBUTE);
     }
 }

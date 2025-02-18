@@ -9,7 +9,7 @@ import mg.itu.prom16.util.PackageScanner;
 public class Mapper {
     Map<VerbMapping,Mapping> controllerList;
 
-    public Mapper(String controllerPackage,Class<? extends Annotation > annotationController) throws BuildException{
+    public Mapper(String controllerPackage,Class<? extends Annotation > annotationController) throws BuildException, ClassNotFoundException{
         controllerList=PackageScanner.getMapping(controllerPackage, annotationController);
     }
     public Mapping get(VerbMapping verbMapping){

@@ -8,6 +8,7 @@ import mg.itu.prom16.annotation.RejectRole;
 import mg.itu.prom16.annotation.RoleRequired;
 import mg.itu.prom16.exception.build.BuildException;
 import mg.itu.prom16.exception.UnauthorizedException;
+import mg.itu.prom16.util.Environment;
 
 public class RoleSessionManager {
 
@@ -17,13 +18,10 @@ public class RoleSessionManager {
     private String unauthorizedRedirectUrl;
 
     public RoleSessionManager(HttpServletRequest request) throws BuildException {
-        this.sessionName = request.getServletContext().getInitParameter("roleSessionName");
-        if (this.sessionName == null || this.sessionName.isEmpty()) {
-            this.sessionName = "roleSession";
-        }
+        this.sessionName = Environment.getProperty("roleSessionName", "roleSession");
         this.sessionObject = request.getSession().getAttribute(this.sessionName);
 
-        String roleMatcherClassName = request.getServletContext().getInitParameter("roleMatcher");
+        String roleMatcherClassName = Environment.getProperty("roleMatcher");
         if (roleMatcherClassName != null && !roleMatcherClassName.isEmpty()) {
             try {
                 Class<?> clazz = Class.forName(roleMatcherClassName);
@@ -36,7 +34,7 @@ public class RoleSessionManager {
             this.roleMatcher = new StringRoleMatcher();
         }
 
-        this.unauthorizedRedirectUrl = request.getServletContext().getInitParameter("unauthorizedRedirectUrl");
+        this.unauthorizedRedirectUrl = Environment.getProperty("unauthorizedRedirectUrl");
     }
 
     public boolean hasRole(String[] roles) {

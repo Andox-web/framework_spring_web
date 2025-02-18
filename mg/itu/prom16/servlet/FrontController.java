@@ -1,16 +1,12 @@
 package mg.itu.prom16.servlet;
 
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map.Entry;
-
-import com.google.gson.Gson;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,53 +16,64 @@ import mg.itu.prom16.exception.ErrorPrinter;
 import mg.itu.prom16.exception.build.BuildException;
 import mg.itu.prom16.exception.request.MappingNotAllowedException;
 import mg.itu.prom16.exception.request.TypeNotRecognizedException;
-import mg.itu.prom16.mapping.Mapping;
-import mg.itu.prom16.mapping.VerbMapping;
+import mg.itu.prom16.interceptor.Interceptor;
 import mg.itu.prom16.mapping.ExecutionResult;
 import mg.itu.prom16.mapping.Mapper;
-import mg.itu.prom16.response.ModelAndView;
+import mg.itu.prom16.mapping.Mapping;
+import mg.itu.prom16.mapping.VerbMapping;
 import mg.itu.prom16.response.ResponseHandler;
 import mg.itu.prom16.response.StringResponseHandler;
-import mg.itu.prom16.interceptor.Interceptor;
+import mg.itu.prom16.util.BeanFactory;
+import mg.itu.prom16.util.Environment;
 import mg.itu.prom16.util.InterceptorUtil;
+import mg.itu.prom16.util.PackageScanner;
 
 public class FrontController extends HttpServlet {
 
-    Mapper mapper;
-    Class<? extends Annotation > annClass=Controller.class;
+    private Mapper mapper;
+    private Class<? extends Annotation > annClass=Controller.class;
     private final StringResponseHandler stringResponseHandler = new StringResponseHandler();
-    private final Interceptor[] interceptors = InterceptorUtil.getInterceptors();
+    private Interceptor[] interceptors ;
 
     @Override
     public void init() throws ServletException {
         super.init();
         try {
-            mapper=new Mapper(getInitParameter("controllerPackage"), annClass);
-        } catch (BuildException e) {
-            throw new Error(e);
+            Environment.loadEnvironmentClass("application.properties");
+            PackageScanner.scan(Environment.getProperty("projectPackage"));
+            BeanFactory.createBeans();
+            interceptors = InterceptorUtil.getInterceptors();
+            String controllerPackage = Environment.getProperty("controllerPackage");
+            if (controllerPackage == null) {
+                controllerPackage = "";
+            }
+            mapper = new Mapper(controllerPackage, annClass);
+        } catch (Exception e) {
+            throw new ServletException(new BuildException("Failed to initialize FrontController", e));
         }
     }
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
         String url = request.getServletPath();
-        if (url.startsWith("/resources")||url.startsWith("/assets")) {
-            RequestDispatcher dispatcher = request.getRequestDispatcher(url);
-            dispatcher.forward(request, response);
+        if (isValidResource(url)) {
+            processResource(url, response);
             return;
         }
-
+        
         VerbMapping verbMapping= new VerbMapping(request);
         Mapping map = mapper.get(verbMapping);
         response.setContentType("text/html");
         Exception exception = null;
         try {
-            for (Interceptor interceptor : interceptors) {
-                if (!interceptor.preHandle(request, response, map.getMethod())) {
-                    return;
-                }
-            }
+            
             if (map != null) {
+                for (Interceptor interceptor : interceptors) {
+                    if (!interceptor.preHandle(request, response, map.getMethod())) {
+                        return;
+                    }
+                }
                 ExecutionResult executionResult = map.execute(request, response);
                 for (Interceptor interceptor : interceptors) {
                     interceptor.postHandle(request, response, executionResult);
@@ -74,6 +81,7 @@ public class FrontController extends HttpServlet {
                 handleResponse(request, response, executionResult);
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
             }
             
         } catch (TypeNotRecognizedException e) {
@@ -104,7 +112,7 @@ public class FrontController extends HttpServlet {
         } finally {
             for (Interceptor interceptor : interceptors) {
                 try {
-                    interceptor.afterCompletion(request, response, map.getMethod(), exception);
+                    interceptor.afterCompletion(request, response, map!=null ? map.getMethod():null, exception);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -139,6 +147,38 @@ public class FrontController extends HttpServlet {
             responseHandler.processAction(request, response);
         } else {
             throw new TypeNotRecognizedException(object.getClass().getTypeName(), executionResult.getMapping());
+        }
+    }
+
+    private boolean isValidResource(String path) {
+        return path != null && (path.endsWith(".png") || path.endsWith(".jpg") || 
+                path.endsWith(".css") || path.endsWith(".js") || path.endsWith(".html"));
+    }
+    private void processResource(String path, HttpServletResponse response) throws IOException {
+        // Construire le chemin réel du fichier dans WEB-INF
+        String realPath = path;
+
+        // Charger la ressource depuis le classpath (WEB-INF)
+        try (InputStream resourceStream = getServletContext().getResourceAsStream(realPath)) {
+            if (resourceStream == null) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
+            // Déterminer le type MIME du fichier
+            String mimeType = getServletContext().getMimeType(realPath);
+            if (mimeType == null) {
+                mimeType = "application/octet-stream"; // Type par défaut
+            }
+            response.setContentType(mimeType);
+
+            // Copier le fichier dans la réponse
+            ServletOutputStream out = response.getOutputStream();
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = resourceStream.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
         }
     }
 }
