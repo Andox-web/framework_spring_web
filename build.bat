@@ -1,7 +1,7 @@
 @ECHO OFF
 
 REM Define variables
-SET APP_NAME=Framework
+SET APP_NAME=framework_2624
 SET APP_DIR=%~dp0
 SET SRC_DIR=%APP_DIR%mg
 SET LIB_DIR=%APP_DIR%lib

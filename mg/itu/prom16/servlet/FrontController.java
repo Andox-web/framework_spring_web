@@ -39,7 +39,14 @@ public class FrontController extends HttpServlet {
     public void init() throws ServletException {
         super.init();
         try {
-            Environment.loadEnvironmentClass("application.properties");
+            String propertiesFile = getInitParameter("propertiesFile");
+            if (propertiesFile == null) {
+                propertiesFile = getServletContext().getInitParameter("propertiesFile");
+                if (propertiesFile == null) {
+                    propertiesFile = "application.properties";
+                }
+            }
+            Environment.loadEnvironmentClass(propertiesFile);
             PackageScanner.scan(Environment.getProperty("projectPackage"));
             BeanFactory.createBeans();
             interceptors = InterceptorUtil.getInterceptors();
