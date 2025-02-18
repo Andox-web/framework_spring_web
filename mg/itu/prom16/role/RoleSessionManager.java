@@ -53,12 +53,12 @@ public class RoleSessionManager {
         if (annotation instanceof RoleRequired) {
             RoleRequired roleRequired = (RoleRequired) annotation;
             if (sessionObject == null || (roleRequired.value().length != 0 && !hasRole(roleRequired.value()))) {
-                throw new UnauthorizedException("Unauthorized");
+                throw new UnauthorizedException("Unauthorized", annotation, sessionObject);
             }
         } else if (annotation instanceof RejectRole) {
             RejectRole rejectRole = (RejectRole) annotation;
             if (hasRole(rejectRole.value())) {
-                throw new UnauthorizedException("Unauthorized");
+                throw new UnauthorizedException("Unauthorized", annotation, sessionObject);
             }
         }
         return true;

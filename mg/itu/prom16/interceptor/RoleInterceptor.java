@@ -20,7 +20,10 @@ public class RoleInterceptor extends HandlerInterceptor {
                 return roleSessionManager.checkRole(method);
             } catch (UnauthorizedException e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                String url = roleSessionManager.getUnauthorizedRedirectUrl();
+                String url = e.getAnnotationUnauthorizedRedirectUrl();
+                if (url == null || url.isEmpty()) {
+                    url = roleSessionManager.getUnauthorizedRedirectUrl();
+                }
                 if (url != null && !url.isEmpty()) {
                     response.sendRedirect(request.getContextPath() + url);
                 }
