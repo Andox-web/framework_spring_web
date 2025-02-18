@@ -4,11 +4,13 @@ import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import mg.itu.prom16.util.Environment;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.gson.Gson;
 
@@ -30,7 +32,16 @@ public class StringResponseHandler {
         if (startsWithAny(string)) {
             handleSpecialPrefix(request, response, string);
         } else {
-            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/jsp/"+string+".jsp");
+            String viewFolder = Optional.ofNullable(Environment.getProperty("viewFolder"))
+                        .orElse("");
+            String suffix = Optional.ofNullable(Environment.getProperty("suffixe"))
+                        .orElse("");
+
+            StringBuilder stringBuilder = new StringBuilder(viewFolder)
+                                                .append(string)
+                                                .append(suffix);
+    
+            RequestDispatcher dispatcher = request.getRequestDispatcher(stringBuilder.toString());
             dispatcher.forward(request, response);
         }
     }

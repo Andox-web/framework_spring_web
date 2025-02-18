@@ -5,8 +5,10 @@ import java.lang.reflect.Method;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.role.RoleSessionManager;
+import mg.itu.prom16.annotation.Component;
 import mg.itu.prom16.exception.UnauthorizedException;
 
+@Component
 public class RoleInterceptor extends HandlerInterceptor {
 
     @Override

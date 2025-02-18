@@ -12,6 +12,7 @@ import mg.itu.prom16.exception.request.ArgumentException;
 import mg.itu.prom16.exception.request.MappingNotAllowedException;
 import mg.itu.prom16.servlet.Session;
 import mg.itu.prom16.util.ArgumentsResolver;
+import mg.itu.prom16.util.BeanFactory;
 import mg.itu.prom16.validation.ValidationScanner;
 import mg.itu.prom16.response.ModelAndView;
 import mg.itu.prom16.response.ResponseHandler;
@@ -71,9 +72,10 @@ public class Mapping {
 
     private static Object createInstance(Class<?> controllerClass, HttpServletRequest request) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException  {
         // Obtenir le constructeur par défaut
-        Constructor<?> constructor = controllerClass.getDeclaredConstructor();
-        // Créer une nouvelle instance du contrôleur
-        Object instance = constructor.newInstance();
+        Object instance = BeanFactory.getBean(controllerClass);
+        if (instance == null) {
+            throw new InstantiationException("Impossible de créer une instance de " + controllerClass.getName());
+        }
         // Créer une nouvelle instance de Session
         Session session = new Session(request);
 

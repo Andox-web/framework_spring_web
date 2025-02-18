@@ -4,9 +4,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.response.FlashMap;
 import mg.itu.prom16.response.SessionFlashAttribute;
+import mg.itu.prom16.annotation.Component;
 import mg.itu.prom16.mapping.ExecutionResult;
 import mg.itu.prom16.response.RedirectAttributes;
 
+@Component
 public class SessionFlashAttributeInterceptor extends HandlerInterceptor {
     private final SessionFlashAttribute flashAttributeManager;
 
