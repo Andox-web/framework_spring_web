@@ -37,6 +37,10 @@ public class MultipartFile {
         return filePath;
     }
 
+    public boolean deleteFile(String filePath) {
+        File file = new File(filePath);
+        return file.delete();
+    }
 
     public byte[] getBytes() throws IOException {
         try (InputStream inputStream = part.getInputStream();

@@ -1,4 +1,4 @@
-package mg.itu.prom16.util;
+package mg.itu.prom16.environment;
 
 import java.io.IOException;
 import java.io.InputStream;

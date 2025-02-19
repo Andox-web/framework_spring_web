@@ -1,22 +1,20 @@
 package mg.itu.prom16.mapping;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Field;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.exception.request.ArgumentException;
 import mg.itu.prom16.exception.request.MappingNotAllowedException;
+import mg.itu.prom16.response.ResponseHandler;
 import mg.itu.prom16.servlet.Session;
 import mg.itu.prom16.util.ArgumentsResolver;
 import mg.itu.prom16.util.BeanFactory;
 import mg.itu.prom16.validation.ValidationScanner;
-import mg.itu.prom16.response.ModelAndView;
-import mg.itu.prom16.response.ResponseHandler;
-import mg.itu.prom16.response.StringResponseHandler;
 
 public class Mapping {
     Class<?> controlleClass;    

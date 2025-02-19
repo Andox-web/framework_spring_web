@@ -39,6 +39,9 @@ if exist %BUILD_DIR%\sources.txt (
 REM Copy library JAR files to the build directory
 XCOPY /Y "%LIB_DIR%\*.jar" "%BUILD_DIR%"
 
+REM Create a marker file
+echo Scan for %APP_NAME% > %BUILD_DIR%\%APP_NAME%_scan.marker
+
 REM Create a JAR file including the compiled classes and library JARs
 jar cvf "%JAR_FILE%" -C "%BUILD_DIR%" .
 
