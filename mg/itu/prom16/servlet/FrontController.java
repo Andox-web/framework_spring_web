@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotation.controller.Controller;
 import mg.itu.prom16.annotation.response.ResponseBody;
+import mg.itu.prom16.environment.Environment;
 import mg.itu.prom16.exception.ErrorPrinter;
 import mg.itu.prom16.exception.build.BuildException;
 import mg.itu.prom16.exception.request.MappingNotAllowedException;
@@ -24,7 +25,6 @@ import mg.itu.prom16.mapping.VerbMapping;
 import mg.itu.prom16.response.ResponseHandler;
 import mg.itu.prom16.response.StringResponseHandler;
 import mg.itu.prom16.util.BeanFactory;
-import mg.itu.prom16.util.Environment;
 import mg.itu.prom16.util.InterceptorUtil;
 import mg.itu.prom16.util.PackageScanner;
 

@@ -4,7 +4,7 @@ import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mg.itu.prom16.util.Environment;
+import mg.itu.prom16.environment.Environment;
 
 import java.io.IOException;
 import java.io.PrintWriter;

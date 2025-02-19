@@ -12,4 +12,13 @@ public class DuplicateUrlException extends BuildException {
         super("Erreur de build : L'URL '" + url + "' est dupliquée.", cause);
         this.url=url;
     }
+    
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
 }

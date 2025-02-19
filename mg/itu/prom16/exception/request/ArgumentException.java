@@ -1,6 +1,6 @@
 package mg.itu.prom16.exception.request;
 
-public class ArgumentException extends Exception {
+public class ArgumentException extends RuntimeException {
 
     public ArgumentException() {
         super();

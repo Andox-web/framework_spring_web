@@ -6,13 +6,11 @@ import java.util.Map;
 import mg.itu.prom16.annotation.Bean;
 import mg.itu.prom16.annotation.Component;
 import mg.itu.prom16.annotation.Configuration;
-import mg.itu.prom16.servlet.FrontController;
 
 public class BeanFactory {
 
     private static final Map<Class<?>, Object> beans = new HashMap<>();
-    private static final Map<Class<?>, BeanInstantiator<?>> beanInstantiators = new HashMap<>();
-
+    
     public static <T> T getBean(Class<T> beanClass) {
         return beanClass.cast(beans.get(beanClass));
     }
@@ -23,6 +21,7 @@ public class BeanFactory {
 
     public final static void createBeans() throws Exception {
         Map<Class<?>, Object> tempBeans = new HashMap<>();
+        Map<Class<?>, BeanInstantiator<?>> beanInstantiators = new HashMap<>();
 
         // Instantiate configurations first
         for (Class<?> configClass : PackageScanner.getCLASSES()) {
@@ -73,7 +72,7 @@ public class BeanFactory {
                     if (method.isAnnotationPresent(Bean.class)) {
                         Object bean = method.invoke(configInstance);
                         ValueInjector.injectValues(bean);
-                        beans.put(bean.getClass(), bean);
+                        beans.put(method.getReturnType(), bean);
                     }
                 }
             }
@@ -82,12 +81,6 @@ public class BeanFactory {
         // Inject beans into attributes with @Autowired annotation
         for (Object bean : beans.values()) {
             BeanInjector.injectBeans(bean, beans);
-        }
-
-        // Print the keys of the created beans
-        System.out.println("Created beans:");
-        for (Class<?> beanClass : beans.keySet()) {
-            System.out.println(beanClass.getName());
         }
     }
 }

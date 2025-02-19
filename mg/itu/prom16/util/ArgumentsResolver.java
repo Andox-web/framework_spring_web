@@ -5,14 +5,23 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotation.param.RequestBody;
 import mg.itu.prom16.annotation.param.RequestParam;
+import mg.itu.prom16.caster.RequestTypeCaster;
+import mg.itu.prom16.caster.TypeResolver;
 import mg.itu.prom16.exception.request.ArgumentException;
 import mg.itu.prom16.mapping.Mapping;
 import mg.itu.prom16.servlet.MultipartFile;
@@ -25,8 +34,13 @@ import mg.itu.prom16.response.RedirectAttributesMap;
 
 public class ArgumentsResolver {
 
+    @SuppressWarnings("unchecked")
     private static final Class<? extends Annotation>[] PARAMETER_ANNOTATIONS = new Class[]{RequestParam.class, RequestBody.class};
 
+    private static final TypeResolver TYPE_RESOLVER = new TypeResolver();
+
+    private static Map<Class<?>, RequestTypeCaster<?>> CUSTOM_TYPE_CASTERS;
+    
     public static Object[] resolveArguments(HttpServletRequest request, HttpServletResponse response, Mapping mapping) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
         
         List<Object> args = new ArrayList<>();
@@ -70,51 +84,69 @@ public class ArgumentsResolver {
 
         for (Class<? extends Annotation> annotationClass : PARAMETER_ANNOTATIONS) {
             if (parameter.isAnnotationPresent(annotationClass)) {
-                Annotation annotation = parameter.getAnnotation(annotationClass);
-                if (annotation instanceof RequestParam) {
-                    String paramName = ((RequestParam) annotation).value();
-                    if (paramName.isEmpty()) {
-                        paramName = parameter.getName();
-                    }
-
-                    if (type.equals(MultipartFile.class)) {
-                        Part part = request.getPart(paramName);
-                        if (part == null) {
-                            return null;
-                        }
-                        return new MultipartFile(part);
-                    }
-
-                    String paramValue = request.getParameter(paramName);
-
-                    if (paramValue == null) {
-                        return null;
-                    }
-
-                    return TypeResolver.castValue(paramValue, type);
-                } else if (annotation instanceof RequestBody) {
-                    try {
-                        Constructor<?> constructor = parameter.getType().getDeclaredConstructor();
-                        Object obj = constructor.newInstance();
-
-                        for (Field field : obj.getClass().getDeclaredFields()) {
-                            String fieldName = field.getName();
-                            String paramValue = request.getParameter(fieldName);
-                            if (paramValue != null) {
-                                field.setAccessible(true);
-                                field.set(obj, TypeResolver.castValue(paramValue, field.getType()));
-                            }
-                        }
-
-                        return obj;
-                    } catch (InstantiationException | IllegalAccessException e) {
-                        throw new ArgumentException(e);
-                    }
-                }
+                return resolve(parameter,parameter.getAnnotation(annotationClass) , request);
             }
         }
 
         throw new ArgumentException("ETU002624 argument non gerer (non annote)");
+    }
+
+    public static Map<Class<?> , RequestTypeCaster<?>> getCustomTypeCasters() {
+        if (CUSTOM_TYPE_CASTERS!=null) {
+            return CUSTOM_TYPE_CASTERS;
+        }
+        Map<Class<?> , RequestTypeCaster<?>> customTypeCasters = new HashMap<>();
+        for (Object bean : BeanFactory.getBeans().values()) {
+            if (bean instanceof RequestTypeCaster requestTypeCaster) {
+                Type type = GenericTypeUtils.getGenericTypes(requestTypeCaster.getClass())[0];
+                if (type instanceof Class<?> clazz) {
+                    customTypeCasters.put(clazz, requestTypeCaster);
+                }
+            }
+        }
+        CUSTOM_TYPE_CASTERS =  customTypeCasters;
+        return customTypeCasters;
+    }
+
+    private static Object resolveField(Class<?> type, String paramName, HttpServletRequest request) throws ArgumentException {
+        if (getCustomTypeCasters().containsKey(type)) {
+            return getCustomTypeCasters().get(type).resolve(type, paramName, request);
+        }
+        return TYPE_RESOLVER.resolve(type, paramName, request);
+    }
+
+    public static Object resolve(Parameter parameter, Annotation annotation, HttpServletRequest request) throws ArgumentException {
+        Class<?> type = parameter.getType();
+
+        if (annotation instanceof RequestParam) {
+            String paramName = ((RequestParam) annotation).value();
+            if (paramName.isEmpty()) {
+                paramName = parameter.getName();
+            }
+
+            return resolveField(type, paramName, request);
+
+        } else if (annotation instanceof RequestBody) {
+            try {
+                Constructor<?> constructor = parameter.getType().getDeclaredConstructor();
+                Object obj = constructor.newInstance();
+
+                for (Field field : obj.getClass().getDeclaredFields()) {
+                    String fieldName = field.getName();
+                    String[] paramValues = request.getParameterValues(fieldName);
+                    if (paramValues != null) {
+                        field.setAccessible(true);
+                        field.set(obj, resolveField(field.getType(), fieldName, request));
+                    }
+                }
+
+                return obj;
+            } catch (Exception e) {
+                throw new ArgumentException(e);
+            }
+        }
+
+        return null;
     }
 }
 
