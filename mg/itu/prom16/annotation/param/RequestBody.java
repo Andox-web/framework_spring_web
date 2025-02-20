@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME) // Pour que l'annotation soit disponible à l'exécution
 @Target(ElementType.PARAMETER) // Pour limiter l'utilisation de l'annotation aux paramètres de méthode
 public @interface RequestBody {
-    String value() default ""; 
+    String value() default "";
+    boolean isJsonable() default false; 
 }
 

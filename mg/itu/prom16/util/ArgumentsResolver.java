@@ -5,32 +5,29 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.stream.Collectors;
+
+import com.google.gson.Gson;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotation.param.RequestBody;
 import mg.itu.prom16.annotation.param.RequestParam;
 import mg.itu.prom16.caster.RequestTypeCaster;
 import mg.itu.prom16.caster.TypeResolver;
 import mg.itu.prom16.exception.request.ArgumentException;
 import mg.itu.prom16.mapping.Mapping;
-import mg.itu.prom16.servlet.MultipartFile;
-import mg.itu.prom16.servlet.Session;
-import mg.itu.prom16.validation.BindingResult;
 import mg.itu.prom16.response.Model;
 import mg.itu.prom16.response.ModelMap;
 import mg.itu.prom16.response.RedirectAttributes;
 import mg.itu.prom16.response.RedirectAttributesMap;
+import mg.itu.prom16.servlet.Session;
+import mg.itu.prom16.validation.BindingResult;
 
 public class ArgumentsResolver {
 
@@ -118,19 +115,28 @@ public class ArgumentsResolver {
     public static Object resolve(Parameter parameter, Annotation annotation, HttpServletRequest request) throws ArgumentException {
         Class<?> type = parameter.getType();
 
-        if (annotation instanceof RequestParam) {
-            String paramName = ((RequestParam) annotation).value();
+        if (annotation instanceof RequestParam requestParam) {
+            String paramName = requestParam.value();
             if (paramName.isEmpty()) {
                 paramName = parameter.getName();
             }
 
             return resolveField(type, paramName, request);
 
-        } else if (annotation instanceof RequestBody) {
+        } else if (annotation instanceof RequestBody requestBody) {
             try {
+                String paramName = requestBody.value();
+                if (paramName.isEmpty()) {
+                    paramName = parameter.getName();
+                }
+                
+                if (requestBody.isJsonable() && request.getParameter(paramName) != null) {
+                    return new Gson().fromJson(request.getParameter(paramName), type);
+                }
+
                 Constructor<?> constructor = parameter.getType().getDeclaredConstructor();
                 Object obj = constructor.newInstance();
-
+                
                 for (Field field : obj.getClass().getDeclaredFields()) {
                     String fieldName = field.getName();
                     String[] paramValues = request.getParameterValues(fieldName);

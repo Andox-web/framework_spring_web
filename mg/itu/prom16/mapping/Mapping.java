@@ -1,15 +1,11 @@
 package mg.itu.prom16.mapping;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mg.itu.prom16.exception.request.ArgumentException;
-import mg.itu.prom16.exception.request.MappingNotAllowedException;
 import mg.itu.prom16.response.ResponseHandler;
 import mg.itu.prom16.servlet.Session;
 import mg.itu.prom16.util.ArgumentsResolver;
@@ -47,9 +43,19 @@ public class Mapping {
 
     
     private ExecutionResult execute(HttpServletRequest request, HttpServletResponse response, Object... arg) 
-            throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException, IOException, ServletException {
+            throws Exception {
         Object instance = createInstance(controlleClass, request);
-        Object result = method.invoke(instance, arg);
+        Object result = null;
+        try{
+            result = method.invoke(instance, arg);
+        }catch (java.lang.reflect.InvocationTargetException e) {
+            Throwable cause = e.getCause(); // Récupère l'exception interne
+            if (cause != null && cause instanceof Exception exception) {
+                throw exception; // Relance l'exception interne
+            } else {
+                throw new RuntimeException("Erreur inconnue lors de l'invocation de la méthode", e);
+            }
+        }
 
         for (Object argument : arg) {
             if (argument instanceof ResponseHandler responseHandler) {
@@ -61,7 +67,7 @@ public class Mapping {
     }
 
     public ExecutionResult execute(HttpServletRequest request, HttpServletResponse response) 
-            throws MappingNotAllowedException, IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
+            throws Exception {
         Object[] args = ArgumentsResolver.resolveArguments(request, response, this);
         ValidationScanner validationScanner = new ValidationScanner();
         validationScanner.scanAndValidate(method, args);

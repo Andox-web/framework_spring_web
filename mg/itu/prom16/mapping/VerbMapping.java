@@ -54,19 +54,20 @@ public class VerbMapping implements Comparable<VerbMapping> {
         return result;
     }
     public static VerbMapping getVerbMapping(Method method,Class<? extends Annotation> URL){
-        VerbMapping verbMapping = new VerbMapping();
-        verbMapping.setUrl(Url.class.cast(method.getAnnotation(URL)).value());
         Set<String> set = new HashSet<>();
         for (Class<? extends Annotation> Annotation : annotationMap.keySet()) {
             if (method.isAnnotationPresent(Annotation)) {
                 set.add(annotationMap.get(Annotation));
             }
         }
-
         if (set.isEmpty()) {
-            set.add("GET");
+            return null;
         }
-        
+
+        VerbMapping verbMapping = new VerbMapping();
+        String urlString = (method.getDeclaringClass().isAnnotationPresent(URL) ? (Url.class.cast(method.getDeclaringClass().getAnnotation(URL))).value() : "") + 
+                           (method.isAnnotationPresent(URL) ? (Url.class.cast(method.getAnnotation(URL))).value() : "");
+        verbMapping.setUrl(urlString);
         verbMapping.setListVerb(set);
         return verbMapping;
     }
