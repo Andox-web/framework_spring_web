@@ -70,8 +70,18 @@ public class BeanFactory {
                 Object configInstance = tempBeans.get(configClass);
                 for (var method : configClass.getDeclaredMethods()) {
                     if (method.isAnnotationPresent(Bean.class)) {
-                        Object bean = method.invoke(configInstance);
-                        ValueInjector.injectValues(bean);
+                        Object bean = null;
+                        try {
+                            bean = method.invoke(configInstance);
+                        } catch (Exception e) {
+                            if(e.getCause() instanceof Exception exception){
+                                throw exception;
+                            }
+                            throw new RuntimeException(e.getCause());
+                        }
+                        if (bean!=null) {
+                            ValueInjector.injectValues(bean);
+                        }
                         beans.put(method.getReturnType(), bean);
                     }
                 }

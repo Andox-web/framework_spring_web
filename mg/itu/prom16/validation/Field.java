@@ -30,7 +30,7 @@ public class Field {
     }
 
     public String getFirstError() {
-        return !errors.isEmpty() ? errors.get(0) : null;
+        return !errors.isEmpty() ? errors.get(0) : "";
     }
 
     public boolean hasErrors() {
