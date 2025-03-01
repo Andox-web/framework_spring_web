@@ -16,8 +16,9 @@ public class ModelMap implements Model {
     }
 
     @Override
-    public void addObject(String name, Object object) {
+    public Model addObject(String name, Object object) {
         model.put(name, object);
+        return this;
     }
 
     @Override

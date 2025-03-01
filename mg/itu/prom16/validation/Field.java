@@ -22,7 +22,10 @@ public class Field {
     }
 
     public Object getFieldValue() {
-        return fieldValue;
+        return fieldValue==null?"":fieldValue;
+    }
+    public String getFieldValueAsString() {
+        return fieldValue==null?"":fieldValue.toString();
     }
 
     public List<String> getErrors() {
@@ -35,6 +38,11 @@ public class Field {
 
     public boolean hasErrors() {
         return !errors.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        return "Field [fieldName=" + fieldName + ", fieldValue=" + fieldValue + ", errors=" + errors + "]";
     }
    
 }

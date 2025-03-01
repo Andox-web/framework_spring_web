@@ -6,8 +6,8 @@ import java.lang.reflect.Method;
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotation.RejectRole;
 import mg.itu.prom16.annotation.RoleRequired;
+import mg.itu.prom16.build.BuildException;
 import mg.itu.prom16.environment.Environment;
-import mg.itu.prom16.exception.build.BuildException;
 import mg.itu.prom16.exception.UnauthorizedException;
 
 public class RoleSessionManager {

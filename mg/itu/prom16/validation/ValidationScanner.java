@@ -1,7 +1,5 @@
 package mg.itu.prom16.validation;
 
-import mg.itu.prom16.annotation.validation.Valid;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
@@ -36,9 +34,6 @@ public class ValidationScanner {
         // Étape 2 : Valider les champs des arguments annotés avec @Valid
         for (int i = 0; i < parameters.length; i++) {
             Object argument = args[i];
-            
-            bindingResult.addField(parameters[i].getName(), argument);
-
             if (parameters[i].isAnnotationPresent(Valid.class)) {
                 validator.validate(argument, bindingResult);
             }

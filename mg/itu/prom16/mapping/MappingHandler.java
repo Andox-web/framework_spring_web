@@ -2,8 +2,6 @@ package mg.itu.prom16.mapping;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
-import mg.itu.prom16.annotation.mapping.Url;
-
 public class MappingHandler {
     // Liste statique des annotations de mapping
     private static final Class<? extends Annotation> URL_ANNOTATIONS = Url.class;

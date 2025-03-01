@@ -11,9 +11,11 @@ import java.nio.file.Paths;
 
 public class MultipartFile {
     private Part part;
+    private String racine;
 
-    public MultipartFile(Part part) {
+    public MultipartFile(Part part,String racine) {
         this.part = part;
+        this.racine = racine.substring(1);
     }
 
     public String saveFile(String uploadDirectory, String fileName) throws IOException {
@@ -22,6 +24,12 @@ public class MultipartFile {
             fileName = getOriginalFileName();
         }
 
+        // Si le chemin commence par "/", on le considère relatif à la racine de l'application web
+        uploadDirectory = uploadDirectory.trim();
+        if (uploadDirectory.startsWith("/")) {
+            uploadDirectory = racine + uploadDirectory;
+        }
+        uploadDirectory = uploadDirectory.replace("\\", File.separator);
         String filePath = uploadDirectory + File.separator + fileName;
         Files.createDirectories(Paths.get(uploadDirectory));
         
@@ -58,7 +66,7 @@ public class MultipartFile {
         return part.getContentType();
     }
 
-    public long getFileLength() {
+    public Long getFileLength() {
         return part.getSize();
     }
 
@@ -74,6 +82,6 @@ public class MultipartFile {
     }
 
     public boolean isEmpty() {
-        return getFileLength() == 0;
+        return part==null;
     }
 }

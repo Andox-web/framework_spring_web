@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import mg.itu.prom16.build.BeanFactory;
 import mg.itu.prom16.interceptor.Interceptor;
 
 public class InterceptorUtil {

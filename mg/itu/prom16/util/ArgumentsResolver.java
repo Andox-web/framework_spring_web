@@ -6,6 +6,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,12 +17,15 @@ import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mg.itu.prom16.annotation.param.RequestBody;
-import mg.itu.prom16.annotation.param.RequestParam;
+import mg.itu.prom16.build.BeanFactory;
 import mg.itu.prom16.caster.RequestTypeCaster;
 import mg.itu.prom16.caster.TypeResolver;
-import mg.itu.prom16.exception.request.ArgumentException;
+import mg.itu.prom16.gson.GsonConfiguration;
 import mg.itu.prom16.mapping.Mapping;
+import mg.itu.prom16.param.PathVariable;
+import mg.itu.prom16.param.RequestBody;
+import mg.itu.prom16.param.RequestParam;
+import mg.itu.prom16.request.ArgumentException;
 import mg.itu.prom16.response.Model;
 import mg.itu.prom16.response.ModelMap;
 import mg.itu.prom16.response.RedirectAttributes;
@@ -32,7 +36,11 @@ import mg.itu.prom16.validation.BindingResult;
 public class ArgumentsResolver {
 
     @SuppressWarnings("unchecked")
-    private static final Class<? extends Annotation>[] PARAMETER_ANNOTATIONS = new Class[]{RequestParam.class, RequestBody.class};
+    private static final Class<? extends Annotation>[] PARAMETER_ANNOTATIONS = new Class[]{
+                                                                                    RequestParam.class, 
+                                                                                    RequestBody.class,
+                                                                                    PathVariable.class
+                                                                                };
 
     private static final TypeResolver TYPE_RESOLVER = new TypeResolver();
 
@@ -44,20 +52,17 @@ public class ArgumentsResolver {
         
         // Récupérer les paramètres de la méthode associée au mapping
         Parameter[] parameters = mapping.getMethod().getParameters();
-
+        
         for (Parameter parameter : parameters) {
             // Vérifier si le paramètre est annoté avec une des annotations de PARAMETER_ANNOTATIONS
-            Object arg = resolveCustomArgument(parameter, mapping.getMethod(), request, response);
-            if (arg == null) {
-                throw new ArgumentException("Paramètre non géré : " + parameter.getName());
-            }
+            Object arg = resolveCustomArgument(parameter, mapping.getMethod(), request, response,PathComparator.extract(mapping.getUrl(), request.getServletPath()));
             args.add(arg);
         }
 
         return args.toArray(new Object[0]);
     }
 
-    private static Object resolveCustomArgument(Parameter parameter, Object method, HttpServletRequest request, HttpServletResponse response) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
+    private static Object resolveCustomArgument(Parameter parameter, Object method, HttpServletRequest request, HttpServletResponse response,Map<String,String> pathVariables) throws IllegalArgumentException, ArgumentException, ReflectiveOperationException, IOException, ServletException {
         Class<?> type = parameter.getType();
 
         if (type.equals(BindingResult.class)) {
@@ -81,7 +86,7 @@ public class ArgumentsResolver {
 
         for (Class<? extends Annotation> annotationClass : PARAMETER_ANNOTATIONS) {
             if (parameter.isAnnotationPresent(annotationClass)) {
-                return resolve(parameter,parameter.getAnnotation(annotationClass) , request);
+                return resolve(parameter,parameter.getAnnotation(annotationClass) , request,pathVariables);
             }
         }
 
@@ -112,7 +117,7 @@ public class ArgumentsResolver {
         return TYPE_RESOLVER.resolve(type, paramName, request);
     }
 
-    public static Object resolve(Parameter parameter, Annotation annotation, HttpServletRequest request) throws ArgumentException {
+    public static Object resolve(Parameter parameter, Annotation annotation, HttpServletRequest request,Map<String,String> pathVariables) throws ArgumentException {
         Class<?> type = parameter.getType();
 
         if (annotation instanceof RequestParam requestParam) {
@@ -123,6 +128,13 @@ public class ArgumentsResolver {
 
             return resolveField(type, paramName, request);
 
+        } else if (annotation instanceof PathVariable pathVariable) {
+            String paramName = pathVariable.value();
+            if (paramName.isEmpty()) {
+                paramName = parameter.getName();
+            }
+
+            return TypeResolver.castValue(pathVariables.get(paramName), type);
         } else if (annotation instanceof RequestBody requestBody) {
             try {
                 String paramName = requestBody.value();
@@ -130,8 +142,10 @@ public class ArgumentsResolver {
                     paramName = parameter.getName();
                 }
                 
-                if (requestBody.isJsonable() && request.getParameter(paramName) != null) {
-                    return new Gson().fromJson(request.getParameter(paramName), type);
+                String param = ServletUtils.getParameter(request,paramName);
+
+                if (requestBody.isJsonable() && param != null) {
+                    return GsonConfiguration.getGson().fromJson(param, type);
                 }
 
                 Constructor<?> constructor = parameter.getType().getDeclaredConstructor();
@@ -139,11 +153,8 @@ public class ArgumentsResolver {
                 
                 for (Field field : obj.getClass().getDeclaredFields()) {
                     String fieldName = field.getName();
-                    String[] paramValues = request.getParameterValues(fieldName);
-                    if (paramValues != null) {
-                        field.setAccessible(true);
-                        field.set(obj, resolveField(field.getType(), fieldName, request));
-                    }
+                    field.setAccessible(true);
+                    field.set(obj, resolveField(field.getType(), fieldName, request));
                 }
 
                 return obj;

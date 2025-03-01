@@ -18,8 +18,9 @@ public class RedirectAttributesMap extends ModelMap implements RedirectAttribute
     }
 
     @Override
-    public void addFlashAttribute(String name, Object value) {
+    public RedirectAttributes addFlashAttribute(String name, Object value) {
         flashMap.put(name, value);
+        return this;
     }
 
     @Override

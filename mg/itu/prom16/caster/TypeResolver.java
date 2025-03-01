@@ -1,5 +1,6 @@
 package mg.itu.prom16.caster;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.ParseException;
@@ -15,8 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.servlet.Servlet;
 import jakarta.servlet.http.HttpServletRequest;
-import mg.itu.prom16.exception.request.ArgumentException;
+import mg.itu.prom16.request.ArgumentException;
+import mg.itu.prom16.util.ServletUtils;
 
 public class TypeResolver extends RequestTypeCaster<Object> {
 
@@ -49,7 +52,7 @@ public class TypeResolver extends RequestTypeCaster<Object> {
     }
 
     public static Object castValue(String paramValue, Class<?> paramType) throws ArgumentException {
-        if (paramValue == null) {
+        if (paramValue == null || paramValue.isEmpty()) {
             return null;
         }
         Function<String, ?> parser = typeParsers.get(paramType);
@@ -112,10 +115,13 @@ public class TypeResolver extends RequestTypeCaster<Object> {
 
     @Override
     public Object resolveObject(Class<?> type, String paramName, HttpServletRequest request) throws ArgumentException {
-        String paramValue = request.getParameter(paramName);
-        if (paramValue == null) {
-            return null;
+        String paramValue = null;
+        try {
+            paramValue = ServletUtils.getParameter(request,paramName);
+        } catch (IOException e) {
+            throw new ArgumentException(e);
         }
+        
         return castValue(paramValue, type);
     }
     

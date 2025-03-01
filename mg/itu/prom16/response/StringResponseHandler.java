@@ -1,11 +1,5 @@
 package mg.itu.prom16.response;
 
-import jakarta.servlet.RequestDispatcher;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import mg.itu.prom16.environment.Environment;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -13,6 +7,14 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.gson.Gson;
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import mg.itu.prom16.build.BeanFactory;
+import mg.itu.prom16.environment.Environment;
+import mg.itu.prom16.gson.GsonConfiguration;
 
 public class StringResponseHandler {
 
@@ -59,7 +61,7 @@ public class StringResponseHandler {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         List<String> jsonResponse = new ArrayList<>();
-        jsonResponse.add(new Gson().toJson(object));
+        jsonResponse.add(GsonConfiguration.getGson().toJson(object));
         writeToResponse(response, jsonResponse);
     }
 

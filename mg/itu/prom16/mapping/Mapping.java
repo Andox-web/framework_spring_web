@@ -6,21 +6,23 @@ import java.lang.reflect.Method;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import mg.itu.prom16.build.BeanFactory;
 import mg.itu.prom16.response.ResponseHandler;
 import mg.itu.prom16.servlet.Session;
 import mg.itu.prom16.util.ArgumentsResolver;
-import mg.itu.prom16.util.BeanFactory;
 import mg.itu.prom16.validation.ValidationScanner;
 
 public class Mapping {
     Class<?> controlleClass;    
     Method method;
     boolean isRest;
+    String url;
     
-    public Mapping(Class<?> controlleClass, Method method) {
+    public Mapping(Class<?> controlleClass, Method method,String url) {
         this.controlleClass = controlleClass;
         this.method = method;
         this.isRest=false;
+        this.url=url;
     }
     public Class<?> getControlleClass() {
         return controlleClass;
@@ -40,8 +42,9 @@ public class Mapping {
     public void setMethod(Method method) {
         this.method = method;
     }
-
-    
+    public String getUrl(){
+        return url;
+    }
     private ExecutionResult execute(HttpServletRequest request, HttpServletResponse response, Object... arg) 
             throws Exception {
         Object instance = createInstance(controlleClass, request);

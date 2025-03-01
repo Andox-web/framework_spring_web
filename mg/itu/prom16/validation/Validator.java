@@ -1,10 +1,11 @@
 package mg.itu.prom16.validation;
 
-import mg.itu.prom16.annotation.validation.*;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import java.util.regex.Pattern;
+
+import mg.itu.prom16.servlet.MultipartFile;
 
 public class Validator {
 
@@ -14,7 +15,7 @@ public class Validator {
             bindingResult.addError("object", null, "L'objet à valider est nul.");
             return;
         }
-
+        
         // Récupérer toutes les annotations de la classe
         Class<?> objectClass = object.getClass();
         Field[] fields = objectClass.getDeclaredFields();
@@ -31,10 +32,9 @@ public class Validator {
     // Méthode qui valide chaque champ en fonction des annotations
     private void validateField(Field field, Annotation annotation, Object object, BindingResult bindingResult) {
         field.setAccessible(true); // Permet d'accéder aux champs privés
-
         try {
             Object fieldValue = field.get(object); // Récupérer la valeur du champ
-
+            bindingResult.addField(field.getName(), fieldValue);
             if (annotation instanceof NotBlank) {
                 validateNotBlank(fieldValue, field, bindingResult);
             } else if (annotation instanceof Email) {
@@ -79,10 +79,32 @@ public class Validator {
             int min = sizeAnnotation.min();
             int max = sizeAnnotation.max();
             int length = fieldValue.toString().length();
-
+            if(fieldValue instanceof MultipartFile multipartFile){
+                long fileSizeBytes = multipartFile.getFileLength();
+                // Convertir en Mo (double pour la précision)
+                Double fileSizeMB = fileSizeBytes / (1024.0 * 1024.0);
+                // Stocker la taille en Mo pour le message (mais validation en octets)
+                length = fileSizeMB.intValue();
+            }
+            if (fieldValue instanceof Number) {
+                length = ((Number) fieldValue).intValue();
+            }
             if (length < min || length > max) {
                 String message = sizeAnnotation.message();
-                bindingResult.addError(field.getName(), fieldValue, message.isEmpty() ? field.getName() + " doit avoir entre " + min + " et " + max + " caractères." : message);
+                String defaultMessage;
+                
+                if (max == Integer.MAX_VALUE) {
+                    // Only min is set (max is default)
+                    defaultMessage = "la taille de " + field.getName() + " doit être au moins " + min;
+                } else if (min == Integer.MIN_VALUE) {
+                    // Only max is set (min is default)
+                    defaultMessage = "la taille de " + field.getName() + " doit être au plus " + max;
+                } else {
+                    // Both min and max are set
+                    defaultMessage = "la taille de " + field.getName() + " doit être entre " + min + " et " + max;
+                }
+                
+                bindingResult.addError(field.getName(), fieldValue, message.isEmpty() ? defaultMessage : message);
             }
         }
     }
@@ -90,7 +112,7 @@ public class Validator {
     // Validation de @Positive
     private void validatePositive(Object fieldValue, Field field, BindingResult bindingResult) {
         if (fieldValue instanceof Number) {
-            if (((Number) fieldValue).doubleValue() <= 0) {
+            if (((Number) fieldValue).intValue() <= 0) {
                 Positive annotation = field.getAnnotation(Positive.class);
                 String message = annotation.message();
                 bindingResult.addError(field.getName(), fieldValue , message.isEmpty() ? field.getName() + " doit être un nombre positif." : message);
@@ -109,7 +131,14 @@ public class Validator {
                 String message = annotation.message();
                 bindingResult.addError(field.getName(), fieldValue, message.isEmpty() ? field.getName() + " doit être une date dans le futur." : message);
             }
-        } else {
+        }else if (fieldValue instanceof LocalDateTime localDateTime) {
+            if (localDateTime.isBefore(LocalDateTime.now())) {
+                Future annotation = field.getAnnotation(Future.class);
+                String message = annotation.message();
+                bindingResult.addError(field.getName(), fieldValue, message.isEmpty() ? field.getName() + " doit être une date dans le futur." : message);    
+            }
+        } 
+        else {
             bindingResult.addError(field.getName(), fieldValue , field.getName() + " doit être une date.");
         }
     }

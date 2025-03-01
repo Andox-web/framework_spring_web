@@ -7,27 +7,30 @@ import java.lang.annotation.Annotation;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mg.itu.prom16.annotation.controller.Controller;
-import mg.itu.prom16.annotation.response.ResponseBody;
+import mg.itu.prom16.build.BeanFactory;
+import mg.itu.prom16.build.BuildException;
+import mg.itu.prom16.build.PackageScanner;
+import mg.itu.prom16.controller.Controller;
 import mg.itu.prom16.environment.Environment;
 import mg.itu.prom16.exception.ErrorPrinter;
-import mg.itu.prom16.exception.build.BuildException;
-import mg.itu.prom16.exception.request.MappingNotAllowedException;
-import mg.itu.prom16.exception.request.TypeNotRecognizedException;
 import mg.itu.prom16.interceptor.Interceptor;
 import mg.itu.prom16.mapping.ExecutionResult;
 import mg.itu.prom16.mapping.Mapper;
 import mg.itu.prom16.mapping.Mapping;
 import mg.itu.prom16.mapping.VerbMapping;
+import mg.itu.prom16.request.MappingNotAllowedException;
+import mg.itu.prom16.request.TypeNotRecognizedException;
+import mg.itu.prom16.response.ResponseBody;
+import mg.itu.prom16.response.ResponseEntity;
 import mg.itu.prom16.response.ResponseHandler;
 import mg.itu.prom16.response.StringResponseHandler;
-import mg.itu.prom16.util.BeanFactory;
 import mg.itu.prom16.util.InterceptorUtil;
-import mg.itu.prom16.util.PackageScanner;
 
+@MultipartConfig
 public class FrontController extends HttpServlet {
 
     private Mapper mapper;
@@ -87,6 +90,7 @@ public class FrontController extends HttpServlet {
                 }
                 handleResponse(request, response, executionResult);
             } else {
+                System.out.println("map: "+verbMapping);
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
@@ -102,6 +106,7 @@ public class FrontController extends HttpServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         } catch (MappingNotAllowedException e) {
             exception=e;
+            e.printStackTrace();
             response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         } catch (Exception e) {
             exception=e;
@@ -139,12 +144,25 @@ public class FrontController extends HttpServlet {
         processRequest(request, response);
     }
 
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        processRequest(req, resp);
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        processRequest(req, resp);
+    }
+
     public void handleResponse(HttpServletRequest request, HttpServletResponse response, ExecutionResult executionResult) throws Exception {
         Object object = executionResult.getResult();
+        if (object instanceof ResponseEntity responseEntity) {
+            object = responseEntity.applyResponse(response);
+        }
         
         if (executionResult.getMapping().isRest()||executionResult.getMapping().getMethod().isAnnotationPresent(ResponseBody.class)) {
             if (object instanceof ResponseHandler responseHandler) {
-               stringResponseHandler.handleJsonResponse(response, responseHandler.getGsonnableResponse());
+                stringResponseHandler.handleJsonResponse(response, responseHandler.getGsonnableResponse());
                 return;
             }
             stringResponseHandler.handleJsonResponse(response, object);

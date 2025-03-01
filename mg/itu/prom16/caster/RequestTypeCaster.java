@@ -3,7 +3,7 @@ package mg.itu.prom16.caster;
 import java.util.Collection;
 
 import jakarta.servlet.http.HttpServletRequest;
-import mg.itu.prom16.exception.request.ArgumentException;
+import mg.itu.prom16.request.ArgumentException;
 
 public abstract class RequestTypeCaster<T> {
     public abstract T[] resolveArray(Class<?> type, String paramName, HttpServletRequest request) throws ArgumentException;

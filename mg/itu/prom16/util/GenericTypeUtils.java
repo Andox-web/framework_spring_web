@@ -28,14 +28,6 @@ public class GenericTypeUtils {
             }
         }
         
-        if (genericTypes != null) {
-            for (Type genericType : genericTypes) {
-            System.out.println("Generic type: " + genericType.getTypeName());
-            }
-        } else {
-            System.out.println("No generic types found.");
-        }
-
         // Retourner les types génériques (null si aucun n'est trouvé)
         return genericTypes;
     }

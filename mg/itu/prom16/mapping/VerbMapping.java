@@ -8,16 +8,16 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.servlet.http.HttpServletRequest;
-import mg.itu.prom16.annotation.mapping.GetMapping;
-import mg.itu.prom16.annotation.mapping.PostMapping;
-import mg.itu.prom16.annotation.mapping.Url;
+import mg.itu.prom16.util.PathComparator;
 
-public class VerbMapping implements Comparable<VerbMapping> {
+public class VerbMapping{
     private static final Map<Class<? extends Annotation>, String> annotationMap = new HashMap<>();
 
     static {
         annotationMap.put(GetMapping.class, "GET");
         annotationMap.put(PostMapping.class, "POST");
+        annotationMap.put(PutMapping.class, "PUT");
+        annotationMap.put(DeleteMapping.class, "DELETE");
     }
 
     Set<String> ListVerb;
@@ -32,26 +32,30 @@ public class VerbMapping implements Comparable<VerbMapping> {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof VerbMapping) {
-            VerbMapping verbMapping=(VerbMapping) obj;
-            System.out.println(verbMapping.url+"  "+url);
-            if (url.equals(verbMapping.url)) {
-                for (String entry : verbMapping.ListVerb) {
-                    if (this.ListVerb.contains(entry)) {
-                        return true;
-                    }
-                }
-            }    
+        if (this == obj) {
+            return true;
         }
-        return false;
+        if (!(obj instanceof VerbMapping)) {
+            return false;
+        }
+        VerbMapping verbMapping =(VerbMapping) obj;
+
+        // Comparaison basée sur l'URL
+        boolean urlComparison = PathComparator.matches(this.url,verbMapping.url);
+        
+        if (!urlComparison) {
+            // Si les URLs sont différentes, on renvoie la comparaison de ces URLs
+            return false;
+        }
+
+        // Si les URLs sont égales, on compare les éléments dans ListVerb
+        // Utilisation de la méthode contains pour voir si la ListVerb contient au moins un élément en commun
+        return verbMapping.ListVerb.stream()
+            .anyMatch(this.ListVerb::contains);
     }
     @Override
     public int hashCode() {
-        int result = url.hashCode();
-        for (String verb : ListVerb) {
-            result = 31 * result + verb.hashCode();
-        }
-        return result;
+        return getClass().hashCode();
     }
     public static VerbMapping getVerbMapping(Method method,Class<? extends Annotation> URL){
         Set<String> set = new HashSet<>();
@@ -91,29 +95,4 @@ public class VerbMapping implements Comparable<VerbMapping> {
     public String toString() {
         return "url "+url+" ListVerb "+ListVerb;
     }
-
-    @Override
-    public int compareTo(VerbMapping o) {
-        VerbMapping verbMapping = o;
-
-        // Comparaison basée sur l'URL
-        int urlComparison = this.url.compareTo(verbMapping.url);
-        
-        if (urlComparison != 0) {
-            // Si les URLs sont différentes, on renvoie la comparaison de ces URLs
-            return urlComparison;
-        }
-
-        // Si les URLs sont égales, on compare les éléments dans ListVerb
-        // Utilisation de la méthode contains pour voir si la ListVerb contient au moins un élément en commun
-        boolean hasCommonVerb = verbMapping.ListVerb.stream()
-            .anyMatch(this.ListVerb::contains);
-
-        if (hasCommonVerb) {
-            return 0; // égaux
-        } else {
-            return 1; // Par exemple, si aucun verb commun, on les considère comme "plus grands"
-        }
-    }
-
 }
