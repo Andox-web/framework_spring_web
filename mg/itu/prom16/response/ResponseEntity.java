@@ -52,6 +52,21 @@ public class ResponseEntity<T> {
             return this;
         }
 
+        public Builder<T> headers(Map<String, String> headers) {
+            this.headers.putAll(headers);
+            return this;
+        }
+
+        public Builder<T> contentType(MediaType mediaType) {
+            this.headers.put("Content-Type", mediaType.getValue());
+            return this;
+        }
+
+        public Builder<T> addHeader(String name, String value) {
+            this.headers.put(name, value);
+            return this;
+        }
+
         public ResponseEntity<T> build() {
             return new ResponseEntity<>(this);
         }
@@ -107,4 +122,7 @@ public class ResponseEntity<T> {
         // Body
         return getBody();
     }
+    public static <R> Builder<R> builder() {
+        return new Builder<>();
+    }  
 }
