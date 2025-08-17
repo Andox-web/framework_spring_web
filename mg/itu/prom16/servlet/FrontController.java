@@ -3,6 +3,7 @@ package mg.itu.prom16.servlet;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
+import java.util.Set;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
@@ -176,9 +177,52 @@ public class FrontController extends HttpServlet {
     }
 
     private boolean isValidResource(String path) {
-        return path != null && (path.endsWith(".png") || path.endsWith(".jpg") || 
-                path.endsWith(".css") || path.endsWith(".js") || path.endsWith(".html"));
-    }
+        if (path == null || path.isEmpty()) return false;
+        
+        final String lowerPath = path.toLowerCase();
+        
+        // Utilisation d'un Set pour les extensions (O(1) lookup)
+        Set<String> ALLOWED_EXTENSIONS = Set.of(
+            "png", "jpg", "jpeg", "gif", "svg", "webp", "bmp", "tiff", "ico",
+            "css", "scss", "less", 
+            "js", "jsx", "ts", "mjs",
+            "html", "htm", "xhtml",
+            "woff", "woff2", "ttf", "eot", "otf",
+            "mp3", "wav", "mp4", "webm", "ogg",
+            "pdf", "txt", "rtf",
+            "json", "xml", "csv",
+            "zip", "gz"
+        );
+        
+        // Chemins autorisés
+        Set<String> ALLOWED_PATH_PARTS = Set.of(
+            "/assets/", "/resources/", "/static/", "/public/", "/webjars/", "/images/",
+            "/_next/", "/_nuxt/", "/node_modules/"
+        );
+        
+        // Vérifier l'extension
+        int dotIndex = lowerPath.lastIndexOf('.');
+        if (dotIndex > 0) {
+            String extension = lowerPath.substring(dotIndex + 1);
+            if (ALLOWED_EXTENSIONS.contains(extension)) {
+                return true;
+            }
+        }
+        
+        // Vérifier les chemins spéciaux
+        for (String allowedPath : ALLOWED_PATH_PARTS) {
+            if (lowerPath.contains(allowedPath)) {
+                return true;
+            }
+        }
+        
+        // Vérifier les ressources versionnées
+        if (lowerPath.matches(".*/v\\d+/.*")) {
+            return true;
+        }
+        
+        return false;
+}
     private void processResource(String path, HttpServletResponse response) throws IOException {
         // Construire le chemin réel du fichier dans WEB-INF
         String realPath = path;
